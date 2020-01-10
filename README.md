@@ -1,20 +1,20 @@
 # mare-interpreter
 
 ## info
-- m-interpreter (mare-interpreter) : mare script ÆÄÀÏ(*.mre)À» ÇØ¼®ÇÏ¿© ½ÇÇàÇÔ.
+- m-interpreter (mare-interpreter) : mare script íŒŒì¼(*.mre)ì„ í•´ì„í•˜ì—¬ ì‹¤í–‰í•¨.
 
 ### build : m-interpreter (for mac, ubuntu)
 
-- build ÂüÁ¶ : build.sh 
+- build ì°¸ì¡° : build.sh 
 
 ### usage : m-interpreter
 - ./m-interpreter script-filename
     - process: script load, verify(syntax), run(func), save(memory for next run)
-    - script ¿øº» ÆÄÀÏÀ» ÀĞÀº ÈÄ, main function (¾øÀ» °æ¿ì, Ã³À½ºÎÅÍ) ½ÇÇàÇÑµÚ, ´ÙÀ½ ½ÇÇàÀ» À§ÇÑ µ¥ÀÌÅÍ ÀúÀå
+    - script ì›ë³¸ íŒŒì¼ì„ ì½ì€ í›„, main function (ì—†ì„ ê²½ìš°, ì²˜ìŒë¶€í„°) ì‹¤í–‰í•œë’¤, ë‹¤ìŒ ì‹¤í–‰ì„ ìœ„í•œ ë°ì´í„° ì €ì¥
 - ./m-interpreter create mare-script-filename func_name func_arges...
     - process: script load, verify(syntax), run(func), save(memory for next run)
-    - script ¿øº» ÆÄÀÏÀ» ÀĞÀº ÈÄ, ÁÖ¾îÁø functionÀ» ½ÇÇàÇÑµÚ, ´ÙÀ½ ½ÇÇàÀ» À§ÇÑ µ¥ÀÌÅÍ ÀúÀå
+    - script ì›ë³¸ íŒŒì¼ì„ ì½ì€ í›„, ì£¼ì–´ì§„ functionì„ ì‹¤í–‰í•œë’¤, ë‹¤ìŒ ì‹¤í–‰ì„ ìœ„í•œ ë°ì´í„° ì €ì¥
 - ./m-interpreter run func_name func_arges...
     - process: load(from saved file), run(func), save(updated memory)
-    - ÀúÀåµÈ µ¥ÀÌÅÍ ÆÄÀÏÀ» ÀĞÀº ÈÄ, ÁÖ¾îÁø functionÀ» ½ÇÇàÇÑµÚ, ´ÙÀ½ ½ÇÇàÀ» À§ÇÑ µ¥ÀÌÅÍ ÀúÀå
+    - ì €ì¥ëœ ë°ì´í„° íŒŒì¼ì„ ì½ì€ í›„, ì£¼ì–´ì§„ functionì„ ì‹¤í–‰í•œë’¤, ë‹¤ìŒ ì‹¤í–‰ì„ ìœ„í•œ ë°ì´í„° ì €ì¥
 

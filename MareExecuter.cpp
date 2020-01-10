@@ -9,7 +9,7 @@ MareExecuter::prepareExecute(string const& fname, vector<string> const& params) 
 
     blkNest = 0;
     readedCodeCnt = 0;
-    initDbgCode(CodeSet(Find));
+    initDbgCode(CodeSet(String, fname.c_str()));
     code = CodeSet(EofLine);
     // 함수 이름이 없는 경우, 에러 
     if (fname == "" || fname.length() == 0) 
@@ -666,7 +666,6 @@ MareExecuter::factor()
         code = nextCode();
         break;
     }
-    case ToInt: 
     case Math:
         execSysFunc();
         break;
@@ -873,11 +872,6 @@ MareExecuter::execSysFunc()
     vector<VarObj> vs;
 
     switch (cs.kind) {
-    case ToInt:
-        code = nextCode();
-        v = getExpression('(', ')');
-        mstk.push(INT_T, floor(v.getDbl()));            /* Int형(버림 값)으로 변환 */
-        break;
     case ToArray:
         {
         code = nextCode();

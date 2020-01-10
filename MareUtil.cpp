@@ -4,7 +4,6 @@
 
 namespace mare_vm {
 
-
 map<string, short> MareUtil::subCmdlist = initSubCmdList();
 map<short, string> MareUtil::subCmdDBG = initSubCmdDBG();
 
@@ -13,15 +12,23 @@ MareUtil::initSubCmdList()
 {
     map<string, short> itemlist_;
 
-    itemlist_.insert(make_pair("now", 1));
-    itemlist_.insert(make_pair("today", 2));
-
     itemlist_.insert(make_pair("ceil", Ceil));
     itemlist_.insert(make_pair("floor", Floor));
     itemlist_.insert(make_pair("abs", Abs));
     itemlist_.insert(make_pair("pow", Pow));
     itemlist_.insert(make_pair("sqrt", Sqrt));
     itemlist_.insert(make_pair("round", Round));
+
+    itemlist_.insert(make_pair("now", Now));
+    itemlist_.insert(make_pair("today", Today));
+
+    itemlist_.insert(make_pair("size", Size));
+    itemlist_.insert(make_pair("length", Size));
+
+    itemlist_.insert(make_pair("toString", ToString));
+
+    itemlist_.insert(make_pair("fine", Find));
+    itemlist_.insert(make_pair("resize", Resize));
 
     return itemlist_;
 }
@@ -45,14 +52,17 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
         short k = m_iter->second;
         switch (tk) {
             case System:
-                if (k == 1 || k == 2) return k;
+                if (k == Now || k == Resize) return k;
+                break;
+            case Property:
+                if (k >= Size && k <= Resize) return k;
                 break;
             case Math:
                 if (k >= Ceil && k <= Round) return k;
                 break;
         }
     }
-
+    /* Not found or mismatched */
     throw tecINVALID_SYSTEM_METHOD;
 }
 

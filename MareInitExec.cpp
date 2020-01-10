@@ -414,7 +414,6 @@ MareInitExec::factor_syntax()
         mstk.push(mutil.getObj(code.symIdx));
         code = nextCode();
         break;
-    case ToInt: 
     case Math:
         execSysFunc_syntax(true);
         break;
@@ -515,10 +514,6 @@ MareInitExec::execSysFunc_syntax(bool needReturn)
     short p;
 
     switch (cs.kind) {
-    case ToInt:
-        code = nextCode(); getExpression_syntax('(', ')');
-        mstk.push(INT_T, 1.0);
-        break;
     case ToArray:
     {
         code = nextCode();

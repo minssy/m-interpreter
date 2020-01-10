@@ -303,6 +303,12 @@ MareInterpreter::convertForRest()
                 errorExit(tecNO_VARIABLE, "This token is not declared.");
             else
                 setCode(Lvar, tblIdx);
+
+            token = nextTkn();
+            if (token.kind != Dot) continue;
+            setCode(Dot);
+            token = nextTkn();
+            setCode(Property, mutil.getIdx(Property, token.text));
             break;
         case IntNum: 
         case DblNum:
@@ -364,10 +370,11 @@ MareInterpreter::convertVarAssign(bool literalOnly)
         switch (token.kind) {
 
         case Do:         case Close: 
-            errorExit(tecINCORRECT_SYNTAX, "키워드 위치가 잘못되었습니다: ", token.text);
+            errorExit(tecINCORRECT_SYNTAX);
             break;
         case Ident:                                                /* 함수 호출, 변수 */
-            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, "함수 인자 초기값에는 리터럴 값만 가능합니다.");
+            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
+                "Only literal values are allowed to initialize function arguments.");
             short tblIdx;
             if ((tblIdx=searchName(token.text, 'G')) != -1) {      /* Global symbol로 등록되어 있는지 확인 */
                 if (Gtable[tblIdx].symKind==funcId)
@@ -379,6 +386,12 @@ MareInterpreter::convertVarAssign(bool literalOnly)
                 errorExit(tecNO_VARIABLE, "This token is not declared.");
             else
                 setCode(Lvar, tblIdx);
+
+            token = nextTkn();
+            if (token.kind != Dot) continue;
+            setCode(Dot);
+            token = nextTkn();
+            setCode(Property, mutil.getIdx(Property, token.text));
             break;
         case IntNum:  case DblNum:                                 /* 정수도 double형으로 저장 */
             setCode(token.kind, setLITERAL(token.numVal));
@@ -395,7 +408,9 @@ MareInterpreter::convertVarAssign(bool literalOnly)
         }
         case Math:
         {
-            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, "함수 인자 초기값에는 리터럴 값만 가능합니다.");
+            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
+                //"함수 인자 초기값에는 리터럴 값만 가능합니다.",
+                "Only literal values are allowed to initialize function arguments.");
             TknKind tp = token.kind;
             token = nextTkn(); token = chkNextTkn(token, '.');
             setCode(tp, mutil.getIdx(tp, token.text));
@@ -405,7 +420,8 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             setCode(token.kind);
             break;
         default:                                                   /* '+', '-', '<=' 등 처리 */
-            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, "함수 인자 초기값에는 리터럴 값만 가능합니다.");
+            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
+                "Only literal values are allowed to initialize function arguments.");
             setCode(token.kind);
             if (token.kind == '(') { inBracket = true; ++bracketLevel; }
             break;

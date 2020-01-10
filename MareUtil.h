@@ -15,6 +15,33 @@ namespace mare_vm {
 
 using namespace std;
 
+enum MathAPI {
+    Ceil = 21,
+    Floor,
+    Abs,
+    Pow,
+    Sqrt,
+    Round
+};
+
+enum VariableAPI {
+
+    /* system */
+    Now = 31,
+    Today,
+    /* common */
+    Size = 41,
+    /* int, double */
+    ToString,
+    /* string */
+    // ToInt,
+    // ToDbl,
+
+    /* array */
+    Find = 51,
+    Resize,
+};
+
 class MareUtil {
 
 public:
@@ -32,8 +59,8 @@ public:
     VarObj getObj(short const type) {
         switch (type)
         {
-        case 1: return VarObj(DATETIME_T, getTimeNow());
-        case 2: return VarObj(DATETIME_T, getTodayTime());
+        case Now: return VarObj(DATETIME_T, getTimeNow());
+        case Today: return VarObj(DATETIME_T, getTodayTime());
         
         default:
             throw tecINVALID_SYSTEM_METHOD;

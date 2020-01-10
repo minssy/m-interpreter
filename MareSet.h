@@ -17,6 +17,7 @@
 #include <cctype>
 
 #include <algorithm> 
+#include <functional>
 #include <locale>
 #include <regex>
 
@@ -43,14 +44,32 @@ const static int LEN_DECIMAL_POINTS      = 8;           /* double형의 소수�
 const static double CAL_DECIMAL_POINTS   = pow(10, LEN_DECIMAL_POINTS); /* double형의 소수점 계산값 */
 
 
-enum MathAPI {
-    Ceil = 21,
-    Floor,
-    Abs,
-    Pow,
-    Sqrt,
-    Round
-};
+// enum MathAPI {
+//     Ceil = 21,
+//     Floor,
+//     Abs,
+//     Pow,
+//     Sqrt,
+//     Round
+// };
+
+// enum VariableAPI {
+
+//     /* system */
+//     Now = 31,
+//     Today,
+//     /* common */
+//     Size = 41,
+//     /* int, double */
+//     ToString,
+//     /* string */
+//     // ToInt,
+//     // ToDbl,
+
+//     /* array */
+//     Find = 51,
+//     Resize,
+// };
 
 /** 코드 (토큰) 종류 정의 */
 enum TknKind {
@@ -86,21 +105,20 @@ enum TknKind {
   End, Break, Return, Continue,
   // 단독형 함수
   Require=160, Exit, Log, Throws, 
-  ToInt, ToArray,
+  ToArray,
  
   // 변수/배열 귀속형 함수
-  ToString=180, 
-  /*Length,*/ Size, 
-  Find,  
+  //ToString=180, 
+  /*Length,*/ //Size, Find,  
 
   /* 디버깅용 */
-  Version=238,
-  Expression=239, // 일반식
+  Expression=231, // 일반식
+  Math=235,
+  System,
+  Property,
   /* 여기부터 고정 값 */
-  Math=240,
-  System=241,
-
-  True=243, 
+  Version=242,
+  True=243,
   False,
   Ident,     // 일반식별자 (변수명이나 함수명)
   Doll,      // $ 문자로 시작하는 변수명

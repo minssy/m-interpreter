@@ -84,12 +84,12 @@ MareBase::initKindMap() {
     tmpKinds.insert(make_pair("require", Require));    
     tmpKinds.insert(make_pair("exit", Exit));
     tmpKinds.insert(make_pair("toArray", ToArray));
-    tmpKinds.insert(make_pair("toInt", ToInt));
-    // 변수/배열 귀속형 함수
-    tmpKinds.insert(make_pair("toString", ToString));
-    tmpKinds.insert(make_pair("length", Size));
-    tmpKinds.insert(make_pair("size", Size));
-    tmpKinds.insert(make_pair("find", Find));
+    // tmpKinds.insert(make_pair("toInt", ToInt));
+    // // 변수/배열 귀속형 함수
+    // tmpKinds.insert(make_pair("toString", ToString));
+    // tmpKinds.insert(make_pair("length", Size));
+    // tmpKinds.insert(make_pair("size", Size));
+    // tmpKinds.insert(make_pair("find", Find));
 
     return tmpKinds;
 }
@@ -125,6 +125,7 @@ MareBase::initKindDBGMap() {
 
     kindDBG.insert(make_pair(Doll, "Doll"));
     kindDBG.insert(make_pair(Ident, "Ident"));
+    kindDBG.insert(make_pair(Property, "Property"));
 
     kindDBG.insert(make_pair(Expression, "Expression"));
     kindDBG.insert(make_pair(Version, "Version"));
@@ -154,6 +155,7 @@ MareBase::initKindNUMMap() {
     kindMapNum.insert(make_pair(String, 2));
 
     kindMapNum.insert(make_pair(System, 2));
+    kindMapNum.insert(make_pair(Property, 2));
     kindMapNum.insert(make_pair(Math, 2));
     kindMapNum.insert(make_pair(Throws, 2));
     
@@ -195,7 +197,7 @@ MareBase::kind2Str(CodeSet const& cd)
     case IntNum: return to_string((long)cd.numVal);
     case DblNum: return to_string(cd.numVal);
     case String: return string("\"") + cd.text + "\"";
-    case System: case Math:  
+    case System: case Property: case Math:
         return /*kind2Str(cd.kind) + "." +*/ mutil.getSubCmdStr(cd.symIdx);
     case Throws: 
         return transToken(cd.symIdx);

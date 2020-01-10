@@ -7,7 +7,9 @@ namespace mare_vm {
 
 using namespace std;
 
-//#define __INT64_C(c)	c ## L
+#ifdef __APPLE__
+    #define __INT64_C(c)	c ## L
+#endif
 #define INT48_MIN		(-__INT64_C(140737488355327)-1)
 #define INT48_MAX		(__INT64_C(140737488355327))
 
