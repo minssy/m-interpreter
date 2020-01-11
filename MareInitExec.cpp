@@ -249,8 +249,14 @@ MareInitExec::assignVariable(bool strict)
         if (!isNumericType(dt)) errorExit(tecNEED_NUMBER_TYPE);
         code = nextCode();  
     }
+    else if (code.kind == '.') {
+        code = nextCode(); 
+        addDbgCode(code);
+        if (code.kind != SetProperty)
+            errorExit(tecINCORRECT_SYNTAX, "set property only");
+    }
     else {
-        errorExit(tecINCORRECT_SYNTAX, "잘못된 기술입니다.");
+        errorExit(tecINCORRECT_SYNTAX);
     }
 }
 
@@ -366,10 +372,12 @@ MareInitExec::factor_syntax()
         getMemAdrs(code, isArray); 
         if (code.kind == '.') {
             code = nextCode();
+            if (code.kind != GetProperty)
+                errorExit(tecINCORRECT_SYNTAX, "get property only");
             addDbgCode(code);
             if (isArray) {
-                if (code.kind == Size) tmpTp = INT_T;
-                else if (code.kind == Find) { 
+                if (code.symIdx == Size) tmpTp = INT_T;
+                else if (code.symIdx == Find) { 
                     code = nextCode(); code = chkNextCode(code, '(');
                     DtType tmpTp2 = getExpression_syntax(0, 0).getType();
                     if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
@@ -386,9 +394,9 @@ MareInitExec::factor_syntax()
                 else errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (array's property function)");
             }
             else {
-                if (code.kind == ToString && tmpTp != STR_T)
+                if (code.symIdx == ToString && tmpTp != STR_T)
                     tmpTp = STR_T;
-                else if (code.kind == Size && tmpTp == STR_T)
+                else if (code.symIdx == Size && tmpTp == STR_T)
                     tmpTp = INT_T;
                 else 
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");

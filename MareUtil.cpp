@@ -52,14 +52,38 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
         short k = m_iter->second;
         switch (tk) {
             case System:
-                if (k == Now || k == Resize) return k;
+                if (k == Now || k == Today) return k;
                 break;
-            case Property:
-                if (k >= Size && k <= Resize) return k;
+            case GetProperty:
+                if (k >= Size && k <= Find) return k;
+                break;
+            case SetProperty:
+                if (k == Resize) return k;
                 break;
             case Math:
                 if (k >= Ceil && k <= Round) return k;
                 break;
+        }
+    }
+    /* Not found or mismatched */
+    throw tecINVALID_SYSTEM_METHOD;
+}
+
+short 
+MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
+{
+    auto m_iter = subCmdlist.find(itemName);
+    if (m_iter != subCmdlist.end()){
+        tk = GetProperty;
+        short k = m_iter->second;
+        switch (k) {
+            case Size:
+            case ToString:
+            case Find:
+                return k;
+            case Resize:
+                tk = SetProperty;
+                return k;
         }
     }
     /* Not found or mismatched */

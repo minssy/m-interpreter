@@ -43,34 +43,6 @@ const static int MEMORY_RESIZE           = 32;          /* 기본 메모리 할�
 const static int LEN_DECIMAL_POINTS      = 8;           /* double형의 소수점 자릿수 */
 const static double CAL_DECIMAL_POINTS   = pow(10, LEN_DECIMAL_POINTS); /* double형의 소수점 계산값 */
 
-
-// enum MathAPI {
-//     Ceil = 21,
-//     Floor,
-//     Abs,
-//     Pow,
-//     Sqrt,
-//     Round
-// };
-
-// enum VariableAPI {
-
-//     /* system */
-//     Now = 31,
-//     Today,
-//     /* common */
-//     Size = 41,
-//     /* int, double */
-//     ToString,
-//     /* string */
-//     // ToInt,
-//     // ToDbl,
-
-//     /* array */
-//     Find = 51,
-//     Resize,
-// };
-
 /** 코드 (토큰) 종류 정의 */
 enum TknKind {
 
@@ -115,7 +87,8 @@ enum TknKind {
   Expression=231, // 일반식
   Math=235,
   System,
-  Property,
+  GetProperty,
+  SetProperty,
   /* 여기부터 고정 값 */
   Version=242,
   True=243,

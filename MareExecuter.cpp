@@ -202,7 +202,7 @@ MareExecuter::statement()
     else { initDbgCode(); ++Pc; return; }
     top_line = Pc; end_line = code.jmpAdrs;                 /* 코드 제어 범위의 시작과 끝 설정 */
 
-    JLOG(mutil.j_.trace()) << " ===== Start Next Line ( No. "<< Pc << ", Count:" << readedCodeCnt << ") =====";
+    JLOG(mutil.j_.trace()) << " ===== Start Next Line ( No. " << Pc << ", Count:" << readedCodeCnt << ") =====";
     JLOG(mutil.j_.debug()) << debugCodeSet(code);
 
     switch (code.kind) 
@@ -220,7 +220,7 @@ MareExecuter::statement()
 
             if (code.kind == EofLine) break;
             else if (code.kind == ',') code = nextCode(); 
-            else errorExit(tecINCORRECT_SYNTAX, "잘못된 구문.");
+            else errorExit(tecINCORRECT_SYNTAX);
         } while (code.kind == DeclareArr || code.kind == DeclareVar);
         }
         ++Pc;
@@ -375,20 +375,15 @@ MareExecuter::statement()
         ++Pc;
         break;
     case DBPlus:
-    {
-        code = nextCode(); 
-        int varAdrs = getMemAdrs(code, isArray);       /* 저장할 변수 주소 */
-        VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
-        DynamicMem.set(varAdrs, ++old);
-        ++Pc;
-        break;
-    }
     case DBMinus:
     {
+        TknKind ctk = code.kind;
         code = nextCode(); 
         int varAdrs = getMemAdrs(code, isArray);       /* 저장할 변수 주소 */
         VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
-        DynamicMem.set(varAdrs, --old);
+        if (ctk == DBPlus) ++old;
+        else --old;
+        DynamicMem.set(varAdrs, old);
         ++Pc;
         break;
     }
@@ -418,6 +413,12 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
     JLOG(mutil.j_.trace()) << " * type:" << kind2Str(save.kind)
             << " varAdrs:" << varAdrs << " " << old.toFullString(true);
     
+    if (code.kind == '.') {                            /* setProperty 처리 */
+        /* to do */
+        removeDbgCode(); 
+        return;
+    }
+
     if (code.kind == Assign) {
         addDbgCode(code);
         if (old.getType() == NON_T) {                   /* 초기화가 필요한 경우 */
@@ -462,7 +463,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
             code = nextCode();
         }
         else {
-            errorExit(tecINCORRECT_EXPRESSION, "잘못된 구문입니다.");
+            errorExit(tecINCORRECT_EXPRESSION);
         }
         removeDbgCode();
     }
@@ -475,14 +476,14 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
 void 
 MareExecuter::block()  
 {
-    blkNest++; cout << endl << " ========== 업 : " << blkNest;
+    blkNest++; 
     TknKind k;
     while (!breakFlag && !conFlag && !returnFlag && !exitFlag) { /* break, return 등으로 인한 종료 플래그 확인 */
         k = lookCode(Pc);                               /* 다음 line의 시작 코드 확인 */
         if (k==End || k==Else || k==Elif) break;        /* 다음 line이 블록의 정상 종료 조건인지 확인 */
         statement();        
     }
-    blkNest--; cout << endl << " ========== 다운 : " << blkNest;
+    blkNest--; 
 }
 
 /** 
@@ -493,7 +494,6 @@ MareExecuter::block()
 VarObj 
 MareExecuter::getExpression(short kind1, short kind2)
 {
-    JLOG(mutil.j_.trace()) << " * getExpression(" << kind2Str((TknKind)kind1) << ", " << kind2Str((TknKind)kind2) << ")";
     expression(kind1, kind2); 
     return mstk.pop();
 }
@@ -605,9 +605,9 @@ MareExecuter::factor()
         if (code.kind == '.') {                    /* 변수의 값이 아닌 속성(함수)일 경우 */
             code = nextCode();
             if (isArray) {
-                if (code.kind == Size)
+                if (code.symIdx == Size)
                     mstk.push(INT_T, tmpSz);
-                else if (code.kind == Find) {
+                else if (code.symIdx == Find) {
                     code = nextCode(); 
                     expression('(', 0);
                     VarObj compObj = mstk.pop();
@@ -634,9 +634,9 @@ MareExecuter::factor()
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (array's property function)");
             }
             else {
-                if (code.kind == ToString)
+                if (code.symIdx == ToString)
                     mstk.push(STR_T, oo.toStr());
-                else if (code.kind == Size)
+                else if (code.symIdx == Size)
                     mstk.push(INT_T, oo.toStr().length());
                 else 
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");
@@ -659,13 +659,9 @@ MareExecuter::factor()
         break;
         }
     case System:
-    {
-        VarObj oo = mutil.getObj(code.symIdx);
-        mstk.push(oo);
-        JLOG(mutil.j_.trace()) << " ** " << oo.toFullString(true);
+        mstk.push(mutil.getObj(code.symIdx));
         code = nextCode();
         break;
-    }
     case Math:
         execSysFunc();
         break;
@@ -801,7 +797,6 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
 
     short save_blkNest = blkNest;
     blkNest = dbgCode.size();
-    cout << endl << " ========== 저장 : " << save_blkNest << " 변경 : " << blkNest;
     addDbgCode(code);                                      /* func의 시작임 */
 
     // 함수의 인수에 값을 저장 처리
@@ -858,7 +853,6 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
     returnValue.init(save_returnType);
 
     blkNest = save_blkNest;
-    cout << endl << " ========== 복구 : " << blkNest;
 }
 
 /** 내장함수 실행 */
@@ -984,7 +978,7 @@ MareExecuter::getMemAdrs(CodeSet const& cd, bool& isDataObj)
 
     if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
         if (len > 0) isDataObj = true;            /* 배열 자체를 지정 */
-         return adr;
+        return adr;
     }
 
     double d = getExpression('[', ']').getDbl(); 
@@ -1112,6 +1106,8 @@ MareExecuter::nextCode()
     case Gvar: 
     case Lvar:
     case System:
+    case GetProperty: 
+    case SetProperty:
     case Math:
     case Throws:
         tblIdx = *SHORT_P(code_ptr); code_ptr += SHORT_SIZE;

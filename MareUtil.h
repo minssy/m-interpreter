@@ -39,7 +39,13 @@ enum VariableAPI {
 
     /* array */
     Find = 51,
-    Resize,
+    //Resize,
+};
+
+enum VariableSetAPI {
+
+    /* array */
+    Resize = 61,
 };
 
 class MareUtil {
@@ -70,6 +76,7 @@ public:
 
     /** 시스템 변수여부 확인 및 코드에 저장될 값 반환 */
     static short getIdx(TknKind const& tk, string const& itemName);
+    static short getPropertyIdx(string const& itemName, TknKind& tk);
 
     static string getSubCmdStr(short itemType);
 

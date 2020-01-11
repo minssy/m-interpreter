@@ -308,7 +308,9 @@ MareInterpreter::convertForRest()
             if (token.kind != Dot) continue;
             setCode(Dot);
             token = nextTkn();
-            setCode(Property, mutil.getIdx(Property, token.text));
+            TknKind Property;
+            tblIdx = mutil.getPropertyIdx(token.text, Property);
+            setCode(Property, tblIdx);
             break;
         case IntNum: 
         case DblNum:
@@ -391,7 +393,9 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             if (token.kind != Dot) continue;
             setCode(Dot);
             token = nextTkn();
-            setCode(Property, mutil.getIdx(Property, token.text));
+            TknKind Property;
+            tblIdx = mutil.getPropertyIdx(token.text, Property);
+            setCode(Property, tblIdx);
             break;
         case IntNum:  case DblNum:                                 /* 정수도 double형으로 저장 */
             setCode(token.kind, setLITERAL(token.numVal));
