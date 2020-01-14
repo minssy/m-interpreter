@@ -87,7 +87,7 @@ MareInterpreter::convertAll(vector<string> &src)
                 enter(tmpTb, funcId);             /* 함수 인 경우 */
 
                 srcNew.push_back(srcWork[srcLineNo-1]);
-                strInfo = trimCopy(srcWork[srcLineNo-1]);
+                strInfo = mutil.trimCopy(srcWork[srcLineNo-1]);
 
                 if (strInfo.at(4) == ' ') strInfo.erase(0, 5); // func
                 else strInfo.erase(0, 9);                      // function
@@ -244,9 +244,8 @@ MareInterpreter::convert()
     case Do:
     case Close:
     case End:
-    case Size: // case Length: 
-    case Find:
-    case ToString: 
+    case GetProperty:
+    case SetProperty:
         // 단독으로 사용할 수 없는 경우
         errorExit(tecINCORRECT_SYNTAX, "잘못된 " + kind2Str(token.kind) + " 위치입니다."); 
         break;

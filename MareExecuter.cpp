@@ -35,7 +35,7 @@ MareExecuter::prepareExecute(string const& fname, vector<string> const& params) 
     code = nextCode(); // first parameter or ')'
 
     short startPc = intenalCode.size();
-    size_t size = params.size();
+    int size = params.size();
     if (OffsetArgs < size) {
         errorExit(tecINVALID_FUNC_ARGUMENT, "prepare: Invalid parameter count");
     }
@@ -66,18 +66,18 @@ MareExecuter::prepareExecute(string const& fname, vector<string> const& params) 
             string txt = params[k];
             JLOG(mutil.j_.trace()) << " set param -value:'" << txt << "' -type:" << kind2Str(tk);
             if (dt == DATETIME_T) {
-                isUnsignedIntStr(txt);
+                mutil.isUnsignedIntStr(txt);
                 setCode(tk, setLITERAL(atol(params[k].c_str())));
             }
             else if (dt == INT_T) {
                 if (txt == "true") setCode(tk, setLITERAL(1));
                 else if (txt == "false") setCode(tk, setLITERAL(0));
-                else { isIntStr(txt); setCode(tk, setLITERAL(atol(txt.c_str()))); }
+                else { mutil.isIntStr(txt); setCode(tk, setLITERAL(atol(txt.c_str()))); }
             }
             else if (dt == DBL_T) {
                 if (txt == "true") setCode(tk, setLITERAL(1));
                 else if (txt == "false") setCode(tk, setLITERAL(0));
-                else { isNumberStr(txt); setCode(tk, setLITERAL(atof(txt.c_str()))); }
+                else { mutil.isNumberStr(txt); setCode(tk, setLITERAL(atof(txt.c_str()))); }
             }
             else {                
                 setCode(tk, setLITERAL(txt));
@@ -158,9 +158,13 @@ MareExecuter::execute(short startPc)
     JLOG(mutil.j_.trace()) << "execute -start line: " << startPc;
     blkNest = 0;
     readedCodeCnt = 0;
-    baseReg = 0;                                            /* 베이스 레지스터 초깃값 */
-    stpReg = DynamicMem.size();                             /* 스택 포인터 초깃값 */
-    DynamicMem.resize(stpReg+MEMORY_RESIZE);                /* 메모리 영역 초기 확보 */
+    //baseReg = 0;                                            /* 베이스 레지스터 초깃값 */
+    //stpReg = DynamicMem.size();                             /* 스택 포인터 초깃값 */
+    //DynamicMem.resize(stpReg+MEMORY_RESIZE);                /* 메모리 영역 초기 확보 */
+    baseReg = MEMORY_GLOBAL_MAX;                            /* 베이스 레지스터 초깃값 */
+    stpReg = MEMORY_GLOBAL_MAX;                             /* 스택 포인터 초깃값 */
+    DynamicMem.resize(MEMORY_GLOBAL_MAX + MEMORY_RESIZE);   /* 로컬 메모리 영역 초기 확보 */
+    
     breakFlag = conFlag = returnFlag = exitFlag = false;
 
     Pc = startPc;
@@ -202,8 +206,8 @@ MareExecuter::statement()
     else { initDbgCode(); ++Pc; return; }
     top_line = Pc; end_line = code.jmpAdrs;                 /* 코드 제어 범위의 시작과 끝 설정 */
 
-    JLOG(mutil.j_.trace()) << " ===== Start Next Line ( No. " << Pc << ", Count:" << readedCodeCnt << ") =====";
-    JLOG(mutil.j_.debug()) << debugCodeSet(code);
+    JLOG(mutil.j_.trace()) << " ===== Start statement ( Line No. "
+             << Pc << ", Count:" << readedCodeCnt << ") =====";
 
     switch (code.kind) 
     {
@@ -398,6 +402,27 @@ MareExecuter::statement()
     }
 }
 
+/** 심볼 테이블에서 배열 크기 변경에 따른 업데이트
+ * adrs: 배열의 시작 주소
+ * diff: 배열의 크기변화 (양수 및 음수 가능)
+ */
+void 
+MareExecuter::updateSymTbl(int adrs, int diff)
+{
+    short gtblSize = Gtable.size();
+    for (int k=0;k<gtblSize;k++) {
+        if (Gtable[k].symKind == funcId) continue;
+
+        int vAdrs = Gtable[k].adrs;
+        if (vAdrs > adrs) {
+            Gtable[k].adrs = vAdrs + diff;
+        }
+        else if (vAdrs == adrs) {
+            Gtable[k].aryLen += diff;
+        }
+    }
+}
+
 /** 할당 연산자 처리 (=, +=, -=, *=, /=, var++, var--)
  * save: 현재 변수 정보를 담고있는 코드
  * code: 현재 변수의 다음 코드 (연산자 정보)
@@ -408,16 +433,44 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
     addDbgCode(save);
     bool isArray;
     int varAdrs = getMemAdrs(code, isArray);       /* 저장할 변수 주소 */
+    
+    if (code.kind == '.') {                            /* setProperty 처리 */
+        code = nextCode();
+        addDbgCode(code);
+        if (code.symIdx == Resize) {
+            code = nextCode();
+            double nsz = getExpression('(', ')').getDbl();/* 변경될 크기 값 */
+            if (nsz < 1 || nsz != (int)nsz) errorExit(tecNEED_UNSIGNED_INTEGER);
+            if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
+            int osz = symTablePt(save)->aryLen;
+            int diff = nsz - osz;
+            if (diff != 0) {
+                if (diff > 0) { // insert
+                    // symtbl update
+                    updateSymTbl(varAdrs, diff);
+                    VarObj objTmp;
+                    objTmp.init(symTablePt(save)->dtTyp);
+                    // memory update
+                    DynamicMem.updateExpand(varAdrs + osz, diff, objTmp);
+                }
+                else { // erase
+                    // symtbl update
+                    updateSymTbl(varAdrs, diff);
+                    // memory update
+                    diff *= -1;
+                    DynamicMem.updateShrink(varAdrs + osz - diff, diff);
+                }
+            }
+        }
+        else throw tecINCORRECT_SYNTAX;
+        removeDbgCode(); removeDbgCode(); 
+        return;
+    }
+
     if (isArray) errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
     VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
     JLOG(mutil.j_.trace()) << " * type:" << kind2Str(save.kind)
             << " varAdrs:" << varAdrs << " " << old.toFullString(true);
-    
-    if (code.kind == '.') {                            /* setProperty 처리 */
-        /* to do */
-        removeDbgCode(); 
-        return;
-    }
 
     if (code.kind == Assign) {
         addDbgCode(code);
@@ -608,14 +661,16 @@ MareExecuter::factor()
                 if (code.symIdx == Size)
                     mstk.push(INT_T, tmpSz);
                 else if (code.symIdx == Find) {
-                    code = nextCode(); 
-                    expression('(', 0);
-                    VarObj compObj = mstk.pop();
+                    code = nextCode();
+                    //expression('(', 0);
+                    //VarObj compObj = mstk.pop();
+                    VarObj compObj = getExpression('(', 0);
                     int startIdx = 0;
                     if (code.kind == ',') {
                         code = nextCode(); 
-                        expression(0, ')');
-                        startIdx = mstk.pop().getDbl();
+                        startIdx = getExpression(0, ')').getDbl();
+                        // expression(0, ')');
+                        // startIdx = mstk.pop().getDbl();
                         if (startIdx >= tmpSz) errorExit(tecEXCEED_ARRAY_LENGTH);
                     }
                     else code = nextCode();        /* ')' skip */

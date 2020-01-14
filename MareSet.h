@@ -42,6 +42,7 @@ const static int VAR_LITERAL_OFFSET      = 20;          /* 변수타입과 리�
 const static int MEMORY_RESIZE           = 32;          /* 기본 메모리 할당 크기 */
 const static int LEN_DECIMAL_POINTS      = 8;           /* double형의 소수점 자릿수 */
 const static double CAL_DECIMAL_POINTS   = pow(10, LEN_DECIMAL_POINTS); /* double형의 소수점 계산값 */
+const static int MEMORY_GLOBAL_MAX       = 100000;      /* global 메모리 최대 크기 (local 메모리 시작) */
 
 /** 코드 (토큰) 종류 정의 */
 enum TknKind {
@@ -258,55 +259,6 @@ struct ErrObj
     }
 
 };
-
-/** trim (copying) */
-static inline std::string trimCopy(std::string s) {
-    // left trim
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-        std::not1(std::ptr_fun<int, int>(std::isspace))));
-    // right trim
-    s.erase(std::find_if(s.rbegin(), s.rend(),
-        std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-    return s;
-}
-
-static const std::regex INT_TYPE("[+-]?[0-9]+");
-static const std::regex DOUBLE_TYPE("[+-]?[0-9]+[.]?[0-9]+");
-static const std::regex UNSIGNED_INT_TYPE("[+]?[0-9]+");
-static const std::regex NUM_ENG_TYPE("[a-zA-Z0-9]+");
-
-static void isNumberStr(std::string const& str) {
-    //str.find_first_not_of("0123456789.") == std::string::npos;
-
-    if (str.find('.') == std::string::npos){
-        if (!std::regex_match(str, INT_TYPE)){
-            std::cout << std::endl << " int text:" << str;
-            throw tecINVALID_VALUE;
-        }
-        return;
-    }
-
-    if (!std::regex_match(str, DOUBLE_TYPE)){
-        std::cout << std::endl << " double text:" << str;
-        throw tecINVALID_VALUE;
-    }
-}
-
-static void isIntStr(std::string const& str) {
-
-    if (!std::regex_match(str, INT_TYPE)){
-        std::cout << std::endl << " int text:" << str;
-        throw tecINVALID_VALUE;
-    }
-}
-
-static void isUnsignedIntStr(std::string const& str) {
-
-    if (!std::regex_match(str, UNSIGNED_INT_TYPE)){
-        std::cout << std::endl << " datetime text:" << str;
-        throw tecINVALID_VALUE;
-    }
-}
 
 }
 

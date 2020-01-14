@@ -148,8 +148,8 @@ static inline VarObj toVarObj(string& valStr) {
 
 static inline void setMemory(int idx, string& valStr, MareMemory& mem) {
 
-    if (mem.size() <= idx)
-        mem.autoResize(idx);
+    if (mem.size() < idx)
+        mem.resize(idx);
 
     mem.set(idx, toVarObj(valStr));
 }
@@ -162,7 +162,6 @@ static bool fromBlob2Memory(Blob const& private_, vector<SymTbl> const& global, 
     int sz = global.size();
     mem.resize(max);
     string valStr;
-    int m = 0;
     int n = 0;
     for (int k=0; k<sz; k++) {
         if (global[k].symKind == varId) {

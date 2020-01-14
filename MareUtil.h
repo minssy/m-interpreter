@@ -13,6 +13,11 @@
 
 namespace mare_vm {
 
+static const std::regex INT_TYPE("[+-]?[0-9]+");
+static const std::regex DOUBLE_TYPE("[+-]?[0-9]+[.]?[0-9]+");
+static const std::regex UNSIGNED_INT_TYPE("[+]?[0-9]+");
+static const std::regex NUM_ENG_TYPE("[a-zA-Z0-9]+");
+
 using namespace std;
 
 enum MathAPI {
@@ -24,7 +29,7 @@ enum MathAPI {
     Round
 };
 
-enum VariableAPI {
+enum VariableGetAPI {
 
     /* system */
     Now = 31,
@@ -39,7 +44,7 @@ enum VariableAPI {
 
     /* array */
     Find = 51,
-    //Resize,
+
 };
 
 enum VariableSetAPI {
@@ -77,8 +82,14 @@ public:
     /** 시스템 변수여부 확인 및 코드에 저장될 값 반환 */
     static short getIdx(TknKind const& tk, string const& itemName);
     static short getPropertyIdx(string const& itemName, TknKind& tk);
-
+    /** 디버깅용 */
     static string getSubCmdStr(short itemType);
+
+    /** Utils */
+    static std::string trimCopy(std::string s);
+    static void isNumberStr(std::string const& str);
+    static void isIntStr(std::string const& str);
+    static void isUnsignedIntStr(std::string const& str);
 
 private:
     long timeOffset;

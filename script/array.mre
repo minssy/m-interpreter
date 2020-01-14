@@ -1,0 +1,45 @@
+// array test
+double dCnt[5]
+int iCnt[5]
+string sCnt[5]
+int x = 2
+int y = 1
+
+int j
+for (j=0; j<iCnt.size(); )
+{
+    iCnt[j++] = j
+}
+j=0
+log("iCnt (size:", iCnt.size(), ")")
+foreach (y : iCnt) {
+    log (j++, " : ", y)
+}
+
+iCnt.resize(7)
+
+log("iCnt (size:", iCnt.size(), ")")
+j=0
+foreach (y : iCnt) {
+    log (j++, " : ", y)
+}
+iCnt[5] = 8
+iCnt[6] = 7
+log("iCnt (size:", iCnt.size(), ")")
+j=0
+foreach (y : iCnt) {
+    log (j++, " : ", y)
+}
+
+iCnt.resize(4)
+log("iCnt (size:", iCnt.size(), ")")
+j=0
+foreach (y : iCnt) {
+    log (j++, " : ", y)
+}
+
+sCnt.resize(9)
+log("sCnt (size:", sCnt.size(), ")")
+sCnt[7] = "aaa"
+
+log("Done.")

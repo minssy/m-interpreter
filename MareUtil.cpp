@@ -136,4 +136,52 @@ MareUtil::getTodayTime() {
     return (long)current_time;
 }
 
+/** trim (copying) */
+std::string 
+MareUtil::trimCopy(std::string s) {
+    // left trim
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+        std::not1(std::ptr_fun<int, int>(std::isspace))));
+    // right trim
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+        std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+void 
+MareUtil::isNumberStr(std::string const& str) {
+    //str.find_first_not_of("0123456789.") == std::string::npos;
+
+    if (str.find('.') == std::string::npos){
+        if (!std::regex_match(str, INT_TYPE)){
+            std::cout << std::endl << " int text:" << str;
+            throw tecINVALID_VALUE;
+        }
+        return;
+    }
+
+    if (!std::regex_match(str, DOUBLE_TYPE)){
+        std::cout << std::endl << " double text:" << str;
+        throw tecINVALID_VALUE;
+    }
+}
+
+void 
+MareUtil::isIntStr(std::string const& str) {
+
+    if (!std::regex_match(str, INT_TYPE)){
+        std::cout << std::endl << " int text:" << str;
+        throw tecINVALID_VALUE;
+    }
+}
+
+void 
+MareUtil::isUnsignedIntStr(std::string const& str) {
+
+    if (!std::regex_match(str, UNSIGNED_INT_TYPE)){
+        std::cout << std::endl << " datetime text:" << str;
+        throw tecINVALID_VALUE;
+    }
+}
+
 }

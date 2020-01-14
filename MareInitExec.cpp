@@ -20,7 +20,6 @@ MareInitExec::verifySyntax()
 void 
 MareInitExec::chkSyntax() 
 {
-    debug("\n\n = = = = = = ====== chkSyntax ======\n\n", 0);
     chkSyntaxMode = true;
     readedCodeCnt = 0;
     short sz = intenalCode.size();
@@ -30,7 +29,6 @@ MareInitExec::chkSyntax()
     for (Pc=1; Pc<sz; Pc++) {
 
         code = firstCode(Pc);
-        JLOG(mutil.j_.trace()) << debugCodeSet(code);
         blkNest = 0;
         initDbgCode(code);
 
@@ -227,10 +225,26 @@ MareInitExec::updateCode() {
 void 
 MareInitExec::assignVariable(bool strict)
 {
+    CodeSet save = code;
     DtType dt = symTablePt(code)->dtTyp;
-    SymKind sk = symTablePt(code)->symKind;
+    //SymKind sk = symTablePt(code)->symKind;
     bool isArray;
     getMemAdrs(code, isArray);                            /* 좌변 주소 확인 */
+    if (code.kind == '.') {
+        if (strict) errorExit(tecNEED_VARIABLE_TYPE);
+        code = nextCode(); 
+        addDbgCode(code);
+        if (code.kind != SetProperty)
+            errorExit(tecINCORRECT_SYNTAX, "set property only");
+        if (code.symIdx == Resize) {
+            code = nextCode(); 
+            double nsz = getExpression_syntax('(', ')').getDbl();
+            if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
+            if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
+        }
+        else errorExit(tecINCORRECT_SYNTAX);
+        return;
+    }
     if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
     returnValue.init(dt); 
     returnValue = getInitVar(dt);
@@ -248,12 +262,6 @@ MareInitExec::assignVariable(bool strict)
     else if (code.kind == DBPlusR || code.kind == DBMinusR) {
         if (!isNumericType(dt)) errorExit(tecNEED_NUMBER_TYPE);
         code = nextCode();  
-    }
-    else if (code.kind == '.') {
-        code = nextCode(); 
-        addDbgCode(code);
-        if (code.kind != SetProperty)
-            errorExit(tecINCORRECT_SYNTAX, "set property only");
     }
     else {
         errorExit(tecINCORRECT_SYNTAX);
@@ -517,7 +525,7 @@ void
 MareInitExec::execSysFunc_syntax(bool needReturn) 
 {
     CodeSet cs = code;
-    JLOG(mutil.j_.trace()) << " execSysFunc_syntax: " << debugCodeSet(cs);
+    JLOG(mutil.j_.trace()) << " execSysFunc_syntax: " << kind2Str(cs);
     vector<VarObj> vs;
     short p;
 

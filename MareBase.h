@@ -17,7 +17,7 @@ class MareBase {
 public:
     MareBase(int startPc, MareUtil &util) : mutil(util), srcLineNo(0), Pc(startPc), isUpdatedSymbols(false) { }
     ~MareBase() {
-        cout << endl << "* disappearing...";
+        cout << endl << " * disappearing...";
         intenalCode.clear();
         Gtable.clear();
         Ltable.clear();
@@ -28,7 +28,7 @@ public:
     }
 
     /* 디버깅용 */
-    void debug(string const& msg, int lvl);
+    void debugging(string const& msg, int lvl);
     string printInfos();
 
     /** 에러 처리 */
@@ -104,44 +104,43 @@ protected:
     }
 
     /* 디버깅용 */
-    static string debugCodeSet(CodeSet const& codee);
     static string debugInterCode(char* msg, short lineNo);
 
     short countExps;
     inline void initDbgCode() {
-        cout << endl << "***** reset dbg";
+        //cout << endl << "***** reset dbg";
         countExps = 0;
         if (blkNest == 0) dbgCode.clear();
         else dbgCode.erase(dbgCode.begin() + blkNest, dbgCode.end());
-        dbgdbg();
+        //dbgdbg();
     }
     inline void initDbgCode(CodeSet cs) {
         initDbgCode();
         dbgCode.push_back(cs);
-        cout << " new:" << kind2Str(cs.kind);
+        //cout << " new:" << kind2Str(cs.kind);
     }
     inline void addDbgCode(CodeSet cs) {
-        cout << endl << "***** add dbg"; 
+        //cout << endl << "***** add dbg"; 
         dbgCode.push_back(cs);
-        dbgdbg();
+        //dbgdbg();
     }
     inline void addDbgCode(TknKind const tk, short const sym, short const jmp) {
         dbgCode.push_back(CodeSet(tk, sym, jmp));
     }
     inline void changeDbgCode(CodeSet cs) {
-        cout << endl << "***** chg dbg";
+        //cout << endl << "***** chg dbg";
         if (dbgCode.size() > 0) dbgCode.pop_back();
         dbgCode.push_back(cs);
-        dbgdbg();
+        //dbgdbg();
     }
     inline void changeDbgCode(TknKind const tk, short const sym, short const jmp) {
         changeDbgCode(CodeSet(tk, sym, jmp));
     }
     inline void removeDbgCode() {
-        cout << endl << "***** del dbg"; 
+        //cout << endl << "***** del dbg"; 
         if (dbgCode.size() > 0) dbgCode.pop_back();
         else cout << endl << "*******  remove dbg fail why?????  *** ";
-        dbgdbg();
+        //dbgdbg();
     }
     inline string getCodeSetStr(CodeSet& cs) {
         string s1 = kind2Str(cs.kind);
@@ -149,12 +148,12 @@ protected:
         if (s1 == s2) return s1;
         else return s1.append("(").append(s2).append(")");
     }
-    inline void dbgdbg() {
-        cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
-        for(CodeSet c : dbgCode){
-            cout << kind2Str(c.kind) << " ";
-        }
-    }
+    // inline void dbgdbg() {
+    //     cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
+    //     for(CodeSet c : dbgCode){
+    //         cout << kind2Str(c.kind) << " ";
+    //     }
+    // }
 
 private:
     bool isUpdatedSymbols;

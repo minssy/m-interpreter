@@ -76,7 +76,9 @@ private:
      * type 설정이 안된 경우에는 type까지 적용
      */
     void set(VarObj const& nobj) {
-
+        cout << endl << "set:" << nobj.type << "-" << nobj.txt << nobj.val;
+        cout << endl << "ori:" << type << "-" << txt << val;
+        
         if (nobj.type == NON_T) { 
             type = NON_T; txt=""; val=0;
             return;       
@@ -84,13 +86,15 @@ private:
         if (type != nobj.type) {
             if (type == NON_T) type = nobj.type; 
             else if (isNumericType(type)) {
-                if (!isNumericType(nobj.type)) 
+                if (!isNumericType(nobj.type)) {
+                    cout << "what???1";
                     throw tecINVALID_ASSIGN;
-                
+                }
                 set(nobj.val);
                 return;
             }
             else if (type != nobj.type) {
+                cout << "what?2";
                 throw tecINVALID_ASSIGN;
             }
         }
@@ -165,9 +169,8 @@ public:
     /** 
      * 객체의 값 반환 (Numeric Value)
      *  - 결과 확인용 (True / False)
-     *  - amount의 값(숫자만) */
-    double getDbl(bool isAmount=false) {
-
+     */
+    double getDbl() {
         if (!isNumericType(type))
             throw tecNEED_NUMBER_TYPE;
         return val;

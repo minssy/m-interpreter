@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
             JLOG(mareUtil.j_.info()) << " * execute option:" <<  opt << endl;
             auto pars = MareInterpreter(mareUtil);
-            pars.debug("===== convert_to_internalCode =====", 1);
+            pars.debugging("===== convert_to_internalCode =====", 1);
             if (argc == 2){
                 auto sources = fileOpen(argv[1]);
                 pars.convertToInterCode(sources);
@@ -103,43 +103,39 @@ int main(int argc, char *argv[])
                 pars.convertToInterCode(sources);
             }
 
-            pars.debug("===== saving =====", 1);
+            pars.debugging("===== saving =====", 1);
             pars.printInfos();
             
             obj = pars.getInterCode();
-            size_t code_sz = obj.size();
             fileSave(obj, "./temp/dataCode.bin");
             obj = pars.getFuncInfos();
             fileSave(obj, "./temp/dataFuncs.bin");
             obj = pars.getLiterals();
-            size_t literal_sz = obj.size();
             fileSave(obj, "./temp/dataLiterals.bin");
             obj = pars.getSymbolTable();
-            size_t symbol_sz = obj.size();
             fileSave(obj, "./temp/dataSymbols.bin");
 
             // 사용자가 시작 함수명과 인수를 입력했는지 확인
             // 사용자가 따로 입력한 것이 없을 경우, main함수가 있는지 확인
             if (argc > 3){
-                pars.debug("===== execute ready =====", 1);
+                pars.debugging("===== execute ready =====", 1);
                 for (int k=3; k<argc; k++) {
                     string funcinfoStr(argv[k]);
                     strs.push_back(funcinfoStr);
                 }
                 pars.prepareExecute(strs);
-                pars.debug("===== saving =====", 1);
+                pars.debugging("===== saving =====", 1);
                 //pars.print(); 
             }
             obj = pars.getMemories();
-            size_t memory_sz = obj.size();
             fileSave(obj, "./temp/dataMemoryPri.bin");
 
-            pars.debug("===== log =====", 0);
+            pars.debugging("===== log =====", 0);
             Blob bb = pars.getLogs();
             string strLog {bb.begin(), bb.end()};
             JLOG(mareUtil.j_.info()) << strLog;
 
-            pars.debug("===== done =====", 0);
+            pars.debugging("===== done =====", 0);
         } // end create
         else if (opt.compare("run") == 0 || opt.compare("runself") == 0) 
         {            
@@ -156,7 +152,7 @@ int main(int argc, char *argv[])
             }
 
             auto exec = MareExecuter(mareUtil);
-            exec.debug("===== loading =====", 1);
+            exec.debugging("===== loading =====", 1);
             //exec.loadProcess();
             size_t datas_sz;
             fileLoad(obj, "./temp/dataCode.bin");
@@ -171,15 +167,14 @@ int main(int argc, char *argv[])
             datas_sz += obj.size();
             fileLoad(obj, "./temp/dataMemoryPri.bin");
             exec.setMemories(obj);
-            size_t memory_sz = obj.size();
 
-            exec.debug("===== loaded =====", 1);
+            exec.debugging("===== loaded =====", 1);
             exec.printInfos();
 
-            exec.debug("===== execute =====", 1);
+            exec.debugging("===== execute =====", 1);
             exec.prepareExecute(strs);
 
-            exec.debug("===== saving =====", 1);
+            exec.debugging("===== saving =====", 1);
             if (exec.isUpdatedSymbolTable()) {
                 obj = exec.getSymbolTable();
                 fileSave(obj, "./temp/dataSymbols.bin");
@@ -187,12 +182,12 @@ int main(int argc, char *argv[])
             obj = exec.getMemories();
             fileSave(obj, "./temp/dataMemoryPri.bin");
             
-            exec.debug("===== log =====", 0);
+            exec.debugging("===== log =====", 0);
             Blob bb = exec.getLogs();
             string strLog {bb.begin(), bb.end()};
             JLOG(mareUtil.j_.info()) << strLog;
 
-            exec.debug("===== done =====", 0);
+            exec.debugging("===== done =====", 0);
         }
         else {
             throw "wrong mare argument";

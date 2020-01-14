@@ -61,12 +61,13 @@ private:
 
     int  getMemAdrs(CodeSet const& cd, bool& isDataObj);
     VarObj getExpression(short kind1=0, short kind2=0);
-    void   expression(short kind1, short kind2);    
-    void   term(short n);
-    void   factor();
+    void expression(short kind1, short kind2);    
+    void term(short n);
+    void factor();
 
     short setParams(vector<VarObj>& vs, short numOfParams);
     
+    void updateSymTbl(int adrs, int diff);   
 };
 
 }

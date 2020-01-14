@@ -406,52 +406,17 @@ MareBase::printInfos() {
 
 /* ============ 디버깅용 ============ */
 void 
-MareBase::debug(string const& msg, int lvl) {
+MareBase::debugging(string const& msg, int lvl) {
     
     string spaces = "";
-    if (lvl > 0) JLOG(mutil.j_.info()) << " ";
+    JLOG(mutil.j_.info()) << " ";
 
     while (lvl > 0){
         lvl--;
         spaces += "  ";
     }
     JLOG(mutil.j_.info()) << spaces << "'" << msg << "' -line:" << getLineNo();
-    if (lvl > 0) JLOG(mutil.j_.info()) << " ";
-}
-
-
-/* ============ 디버깅용 ============ */
-string 
-MareBase::debugCodeSet(CodeSet const& codee) {
-
-    string str(" * code -kind:'");
-    string msgx = kind2Str(codee.kind);
-    str.append(msgx == "" ? to_string(codee.kind) : msgx);
-    if (kind2Skip(codee.kind) == 0)
-        return str;
-
-    switch (codee.kind) {
-    case Func:
-    case While:
-    case For:
-    case Foreach:
-    case If:
-    case Elif: 
-    case Else:
-        str.append(" -jump Adrs:").append(to_string(codee.jmpAdrs));
-        break;
-    case String:
-        str.append("' -text:'").append(codee.text);
-        break;
-    case IntNum:
-    case DblNum:
-        str.append("' -value:").append(to_string(codee.numVal));
-        break;
-    default:
-        str.append(" -symbol Idx:").append(to_string(codee.symIdx));
-        break;
-    }
-    return str;
+    JLOG(mutil.j_.info()) << " ";
 }
 
 /* ============ 디버깅용 ============ */
@@ -475,7 +440,6 @@ MareBase::debugInterCode(char* msg, short lineNo) {
     }
     return str;
 }
-
 
 Blob 
 MareBase::getInterCode() {
