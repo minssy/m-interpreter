@@ -38,6 +38,8 @@ const static int MAX_LINE                = 5000;        /* 프로그램에서 �
 const static int MAX_EXE_LINE            = 102400;      /* 프로그램 실행시, 혀용되는 최대 행수 */
 const static int MAX_MEMORY              = 60000;       /* 최대 메모리 주소 */
 const static int MAX_ARRAY               = 10000;       /* 배열 등의 최대 크기 */
+const static int NOT_DEFINED_ARRAY       = 65535;       /* 배열 등의 크기가 미지정된 경우 */
+const static int MEMORY_BACK_RESIZE      = 20;
 const static int VAR_LITERAL_OFFSET      = 20;          /* 변수타입과 리터럴 타입의 코드값 Offset */
 const static int MEMORY_RESIZE           = 32;          /* 기본 메모리 할당 크기 */
 const static int LEN_DECIMAL_POINTS      = 8;           /* double형의 소수점 자릿수 */
@@ -52,6 +54,7 @@ enum TknKind {
   VarInt, 
   VarStr, 
   VarDateTime, 
+  Vector,
 
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
   
@@ -151,7 +154,7 @@ struct SymTbl
 
     unsigned short   adrs;    /* 변수/함수의 주소 */
     unsigned short   aryLen;  /* 배열길이, 0=단순변수 (func일 경우, 최소 인수개수) */
-    unsigned short   args;    /* 함수의 인수 개수 */
+    unsigned short   args;    /* 함수의 인수 개수 (vector의 버퍼 크기) */
     unsigned short   frame;   /* 함수의 프래임 크기 */
 
     SymTbl() { clear(); }
@@ -186,10 +189,10 @@ struct SymTbl
         str.append(" ").append(std::to_string(adrs));
         str.append(" ").append(std::to_string(aryLen));
 
-        if (!isHumanReadable && symKind == funcId) { // func에서만 필요
+        //if (!isHumanReadable && symKind == funcId) { // func에서만 필요
             str.append(" ").append(std::to_string(args));
             str.append(" ").append(std::to_string(frame));
-        }
+        //}
         str.append(" ").append(name);
         return str;
     }

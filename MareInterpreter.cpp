@@ -164,6 +164,9 @@ MareInterpreter::convert()
     case VarDateTime:
         varDeclare(token.kind);          /* 변수 선언 처리 */
         break;
+    case Vector:
+        vectorDeclare();
+        break;
     case Func:
         chkDo = true;                    /* 블록 시작 체크를 위한 플래그 설정 */
         funcDeclare();                   /* 함수 선언 처리 */
@@ -590,6 +593,25 @@ MareInterpreter::setSymAryLen()
         errorExit(tecBAD_MULTI_DIMENTION_ARRAY, "Multi-dimensional arrays cannot be declared.");
 }
 
+void 
+MareInterpreter::vectorDeclare()
+{
+    JLOG(mutil.j_.trace()) << "*** vector declear ***";
+    token = nextTkn();
+    token = chkNextTkn(token, Less);
+    TknKind varType = token.kind;
+    token = nextTkn();
+    token = chkNextTkn(token, Great);
+    JLOG(mutil.j_.trace()) << " * new vector type:" << kind2Str((TknKind)varType) << " " << token.text;
+    chkVarName(token);                     /* 이름 검사 */
+    setSymName(varType);                   /* 변수 등록에 사용될 SymTbl 셋팅 */
+    //setSymAryLen();                        /* 길이 정보 설정 */
+    tmpTb.aryLen = NOT_DEFINED_ARRAY;
+    short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
+
+    setCodeEofLine();
+}
+
 /** 함수 정의 */
 void 
 MareInterpreter::funcDeclare() 
@@ -882,7 +904,8 @@ MareInterpreter::chkNextTkn(Token const& tk, int kind2)
 short 
 MareInterpreter::enter(SymTbl& tb, SymKind kind) 
 {
-    short n, mem_size;
+    short n;
+    unsigned short mem_size;
     bool isLocal = kind == paraId ? true : false;
     if (kind == varId) {
         isLocal = isLocalScope();
@@ -893,7 +916,13 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
 
     mem_size = tb.aryLen;
     if (mem_size == 0) mem_size = 1;                           /* 단순 변수일 때 처리 */
-
+    else if (mem_size == NOT_DEFINED_ARRAY) { 
+        mem_size = MEMORY_BACK_RESIZE;                         /* vector */
+        tb.args = MEMORY_BACK_RESIZE;
+    }
+    else {
+        tb.args = tb.aryLen;                                   /* fixed array */
+    }
     if (kind == funcId && tb.name[0] == '$')                   /* 함수인 경우, '$' 사용불가 */
         errorExit(tecINVALID_NAME, "Don't allow '$' except variable name: ", tb.name);
 
@@ -902,7 +931,7 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     if (kind == funcId) n = searchName(tb.name, 'G');
     if (kind == paraId) n = searchName(tb.name, 'L');
     if (n != -1) errorExit(tecINVALID_NAME, "Duplicated name: ", tb.name);
-
+    JLOG(mutil.j_.trace()) << "memory_size:" << mem_size;
     // 주소 설정
     if (kind == funcId) 
         tb.adrs = getLineNo();                                 /* 함수 시작 행 정보 저장 */

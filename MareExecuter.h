@@ -67,7 +67,8 @@ private:
 
     short setParams(vector<VarObj>& vs, short numOfParams);
     
-    void updateSymTbl(int adrs, int diff);   
+    void updateArraySize();
+    void updateSymTbl(int adrs, int diff, bool isFixedArray=false);   
 };
 
 }

@@ -156,6 +156,7 @@ void
 MareExecuter::execute(short startPc)
 {
     JLOG(mutil.j_.trace()) << "execute -start line: " << startPc;
+    JLOG(mutil.j_.trace()) << printInfos();
     blkNest = 0;
     readedCodeCnt = 0;
     //baseReg = 0;                                            /* 베이스 레지스터 초깃값 */
@@ -407,7 +408,7 @@ MareExecuter::statement()
  * diff: 배열의 크기변화 (양수 및 음수 가능)
  */
 void 
-MareExecuter::updateSymTbl(int adrs, int diff)
+MareExecuter::updateSymTbl(int adrs, int diff, bool isFixedArray)
 {
     short gtblSize = Gtable.size();
     for (int k=0;k<gtblSize;k++) {
@@ -418,7 +419,8 @@ MareExecuter::updateSymTbl(int adrs, int diff)
             Gtable[k].adrs = vAdrs + diff;
         }
         else if (vAdrs == adrs) {
-            Gtable[k].aryLen += diff;
+            if (isFixedArray) Gtable[k].aryLen += diff;
+            Gtable[k].args += diff;
         }
     }
 }
@@ -447,7 +449,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
             if (diff != 0) {
                 if (diff > 0) { // insert
                     // symtbl update
-                    updateSymTbl(varAdrs, diff);
+                    updateSymTbl(varAdrs, diff, true);
                     VarObj objTmp;
                     objTmp.init(symTablePt(save)->dtTyp);
                     // memory update
@@ -455,12 +457,30 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
                 }
                 else { // erase
                     // symtbl update
-                    updateSymTbl(varAdrs, diff);
+                    updateSymTbl(varAdrs, diff, true);
                     // memory update
                     diff *= -1;
                     DynamicMem.updateShrink(varAdrs + osz - diff, diff);
                 }
+                isUpdatedSymbols = true;
             }
+        }
+        else if (code.symIdx == Push) {
+            code = nextCode();
+            VarObj vo = getExpression('(', ')');
+            // 타입 검사 필요함.
+            int osz = symTablePt(save)->aryLen;
+            int bsz = symTablePt(save)->args;
+            if (osz == NOT_DEFINED_ARRAY) osz = 0;
+            if (osz == bsz) {
+                updateSymTbl(varAdrs, MEMORY_BACK_RESIZE, false);
+                VarObj objTmp;
+                objTmp.init(symTablePt(save)->dtTyp);
+                DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE, objTmp);
+            }
+            symTablePt(save)->aryLen = osz + 1;
+            DynamicMem.set(varAdrs + osz, vo);
+            isUpdatedSymbols = true;
         }
         else throw tecINCORRECT_SYNTAX;
         removeDbgCode(); removeDbgCode(); 
@@ -523,6 +543,12 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
     JLOG(mutil.j_.trace()) << " ** updated varAdrs:" << varAdrs << " " << old.toFullString(true);
     DynamicMem.set(varAdrs, old);                 /* 최종 변수 값으로 메모리 갱신 */
     removeDbgCode(); 
+}
+
+void 
+MareExecuter::updateArraySize()
+{
+    
 }
 
 /** 블록 끝까지 문을 실행 */
@@ -658,8 +684,10 @@ MareExecuter::factor()
         if (code.kind == '.') {                    /* 변수의 값이 아닌 속성(함수)일 경우 */
             code = nextCode();
             if (isArray) {
-                if (code.symIdx == Size)
+                if (code.symIdx == Size) {
+                    if (tmpSz == NOT_DEFINED_ARRAY) tmpSz = 0;
                     mstk.push(INT_T, tmpSz);
+                }
                 else if (code.symIdx == Find) {
                     code = nextCode();
                     //expression('(', 0);
@@ -1035,6 +1063,8 @@ MareExecuter::getMemAdrs(CodeSet const& cd, bool& isDataObj)
         if (len > 0) isDataObj = true;            /* 배열 자체를 지정 */
         return adr;
     }
+    if (len == NOT_DEFINED_ARRAY)
+        errorExit(tecNEED_INIT_VARIABLE, "need initialized.");
 
     double d = getExpression('[', ']').getDbl(); 
     if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index value of array must be a positive integer only.");

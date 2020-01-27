@@ -61,6 +61,8 @@ MareBase::initKindMap() {
     tmpKinds.insert(make_pair("string", VarStr));
     tmpKinds.insert(make_pair("datetime", VarDateTime));
 
+    tmpKinds.insert(make_pair("vector", Vector));
+
     tmpKinds.insert(make_pair("func", Func));      tmpKinds.insert(make_pair("function", Func));
 
     tmpKinds.insert(make_pair("if", If));

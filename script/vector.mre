@@ -1,0 +1,33 @@
+
+vector<int> ivec
+int kk = 4
+vector<string> svec
+string mm
+
+func void pushStr(string aa) 
+{
+    svec.push(aa)
+    mm = aa
+
+    log("----", svec.size(), "----")
+    string ss
+    foreach( ss : svec) {
+        log(ss)
+    }
+}
+
+func void pushInt(int j)
+{
+    ivec.push(j)
+    kk = j
+
+    log("----", ivec.size(), "----")
+    int ii
+    foreach(ii : ivec) {
+        log(ii)
+    }
+}
+
+ivec.push(7)
+
+

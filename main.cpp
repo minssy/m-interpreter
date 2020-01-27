@@ -127,13 +127,18 @@ int main(int argc, char *argv[])
                 pars.debugging("===== saving =====", 1);
                 //pars.print(); 
             }
-            obj = pars.getMemories();
-            fileSave(obj, "./temp/dataMemoryPri.bin");
-
             pars.debugging("===== log =====", 0);
             Blob bb = pars.getLogs();
             string strLog {bb.begin(), bb.end()};
             JLOG(mareUtil.j_.info()) << strLog;
+
+            obj = pars.getMemories();
+            fileSave(obj, "./temp/dataMemoryPri.bin");
+
+            // pars.debugging("===== log =====", 0);
+            // Blob bb = pars.getLogs();
+            // string strLog {bb.begin(), bb.end()};
+            // JLOG(mareUtil.j_.info()) << strLog;
 
             pars.debugging("===== done =====", 0);
         } // end create

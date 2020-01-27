@@ -77,7 +77,7 @@ MareInitExec::chkSyntax()
                 getTopAdrs(code);
                 code = nextCode();
                 if (code.kind == '=') {
-                    if (isArray) errorExit(tecINCORRECT_SYNTAX, "잘못된 선언 구문.");
+                    if (isArray) errorExit(tecINCORRECT_SYNTAX, "배열 선언시, 초기값 할당 불가");
                     else { 
                         addDbgCode(code);
                         returnValue.init(dt);
@@ -87,9 +87,9 @@ MareInitExec::chkSyntax()
                 }
                 if (code.kind == EofLine) break;
                 else if (code.kind == ',') code = nextCode(); 
-                else errorExit(tecINCORRECT_SYNTAX, "잘못된 선언 구문.");
+                else errorExit(tecINCORRECT_SYNTAX, "Wrong declear syntax");
                 if (code.kind != DeclareArr && code.kind != DeclareVar)
-                    errorExit(tecINCORRECT_SYNTAX, "잘못된 선언 구문."); 
+                    errorExit(tecINCORRECT_SYNTAX, "Need declear syntax"); 
                 removeDbgCode();
             } while (true);
             break;
@@ -232,20 +232,10 @@ MareInitExec::assignVariable(bool strict)
     getMemAdrs(code, isArray);                            /* 좌변 주소 확인 */
     if (code.kind == '.') {
         if (strict) errorExit(tecNEED_VARIABLE_TYPE);
-        code = nextCode(); 
-        addDbgCode(code);
-        if (code.kind != SetProperty)
-            errorExit(tecINCORRECT_SYNTAX, "set property only");
-        if (code.symIdx == Resize) {
-            code = nextCode(); 
-            double nsz = getExpression_syntax('(', ')').getDbl();
-            if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
-            if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
-        }
-        else errorExit(tecINCORRECT_SYNTAX);
-        return;
+        return setProperty_syntax(save);
     }
     if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
+
     returnValue.init(dt); 
     returnValue = getInitVar(dt);
     addDbgCode(code);
@@ -266,6 +256,28 @@ MareInitExec::assignVariable(bool strict)
     else {
         errorExit(tecINCORRECT_SYNTAX);
     }
+}
+
+void
+MareInitExec::setProperty_syntax(CodeSet const& varCode)
+{
+    code = nextCode(); 
+    addDbgCode(code);
+    if (code.kind != SetProperty)
+        errorExit(tecINCORRECT_SYNTAX, "set property only");
+    if (code.symIdx == Resize) {
+        if (varCode.kind != Gvar) errorExit(tecINCORRECT_SYNTAX, "global variable only");
+        code = nextCode(); 
+        double nsz = getExpression_syntax('(', ')').getDbl();
+        if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
+        if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
+    }
+    else if (code.symIdx == Push) {
+        code = nextCode();
+        VarObj vo = getExpression_syntax('(', ')');
+        // vo의 타입이 백터의 타입과 같은지?
+    }
+    else errorExit(tecINCORRECT_SYNTAX);
 }
 
 /** 

@@ -24,6 +24,7 @@ protected:
 
 private:
     void assignVariable(bool strict=false);
+    void setProperty_syntax(CodeSet const& varCode);
     int  getMemAdrs(CodeSet const& cd, bool& isDataObj );  // override function
 
     VarObj getExpression_syntax(short kind1=0, short kind2=0);

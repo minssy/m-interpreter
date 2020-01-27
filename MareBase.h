@@ -63,6 +63,7 @@ protected:
 
     short srcLineNo;                       /* 소스의 행 번호 */
     short Pc;                              /* 프로그램 카운터 (-1이면, 실행중 아님) */
+    bool  isUpdatedSymbols;                /* symbol table update 여부 */
     bool  chkSyntaxMode = false;           /* 구문 검사인지, 실행 상태인지 설정 */
     short blkNest;                         /* 블록의 깊이 정보 */
 
@@ -156,7 +157,6 @@ protected:
     // }
 
 private:
-    bool isUpdatedSymbols;
     static map<TknKind, string> kindMapDBG;  /* 소스 코드와 내부 코드의 키워드 맵 */
     static map<TknKind, short>  kindMapNUM;  /* 내부 코드별 숫자정보 */
     static map<string, TknKind> initKindMap(); 

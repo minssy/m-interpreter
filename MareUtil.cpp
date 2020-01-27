@@ -30,6 +30,8 @@ MareUtil::initSubCmdList()
     itemlist_.insert(make_pair("fine", Find));
     itemlist_.insert(make_pair("resize", Resize));
 
+    itemlist_.insert(make_pair("push", Push));
+
     return itemlist_;
 }
 
@@ -58,7 +60,7 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
                 if (k >= Size && k <= Find) return k;
                 break;
             case SetProperty:
-                if (k == Resize) return k;
+                if (k == Resize || k == Push) return k;
                 break;
             case Math:
                 if (k >= Ceil && k <= Round) return k;
@@ -74,14 +76,15 @@ MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
 {
     auto m_iter = subCmdlist.find(itemName);
     if (m_iter != subCmdlist.end()){
-        tk = GetProperty;
         short k = m_iter->second;
         switch (k) {
             case Size:
             case ToString:
             case Find:
+                tk = GetProperty;
                 return k;
             case Resize:
+            case Push:
                 tk = SetProperty;
                 return k;
         }

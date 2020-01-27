@@ -95,14 +95,14 @@ static bool fromBlob2SymTbl(Blob const& in_, vector<SymTbl>& global, vector<SymT
             tmpTb.dtTyp  = (DtType)atoi(params[1].c_str());
             tmpTb.adrs = atoi(params[2].c_str());
             tmpTb.aryLen = atoi(params[3].c_str());            
-            if (tmpTb.symKind == funcId) {
+            //if (tmpTb.symKind == funcId) {
                 tmpTb.args = atoi(params[4].c_str());
                 tmpTb.frame = atoi(params[5].c_str());
                 tmpTb.name = params[6];
-            }
-            else {
-                tmpTb.name = params[4];
-            }
+            //}
+            //else {
+            //    tmpTb.name = params[4];
+            //}
 
             if (typek == Gvar)     
                 global.push_back(tmpTb);
@@ -165,8 +165,8 @@ static bool fromBlob2Memory(Blob const& private_, vector<SymTbl> const& global, 
     int n = 0;
     for (int k=0; k<sz; k++) {
         if (global[k].symKind == varId) {
-            if (global[k].aryLen > 1) {
-                for (int j=0; j<global[k].aryLen; j++){
+            if (global[k].args > 1) {
+                for (int j=0; j<global[k].args; j++){
                     valStr = jStrsPri[n++];
                     
                     setMemory(global[k].adrs + j, valStr, mem);
@@ -248,8 +248,8 @@ static Blob toBlob(MareMemory& in_, vector<SymTbl> const& global) {
     for (int i=0; i<max; i++){
         SymTbl sym = global[i];
         if (sym.symKind != funcId) {
-            if (sym.aryLen > 1) { // 배열인 경우, 배열크기만큼 추가
-                for (short k=0; k<sym.aryLen;k++){
+            if (sym.args > 1) { // 배열인 경우, 배열크기만큼 추가
+                for (short k=0; k<sym.args;k++){
                     appendBlob(in_.get(sym.adrs + k).toFullString(), outPri);
                 }
             }

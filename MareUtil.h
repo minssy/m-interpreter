@@ -51,6 +51,7 @@ enum VariableSetAPI {
 
     /* array */
     Resize = 61,
+    Push,
 };
 
 class MareUtil {
