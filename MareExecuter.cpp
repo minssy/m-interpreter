@@ -1067,11 +1067,11 @@ MareExecuter::getMemAdrs(CodeSet const& cd, bool& isDataObj)
         errorExit(tecNEED_INIT_VARIABLE, "need initialized.");
 
     double d = getExpression('[', ']').getDbl(); 
-    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index value of array must be a positive integer only.");
+    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
 
     int index = (int) d;
     if (index < 0 || len <= index)
-        errorExit(tecEXCEED_ARRAY_LENGTH, "The index value of the array is out of range.");
+        errorExit(tecEXCEED_ARRAY_LENGTH, "The index of the array is out of range.");
 
     return adr + index;		                     /* 배열의 첨자만큼 더함 */
 }

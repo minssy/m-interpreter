@@ -88,6 +88,7 @@ MareInitExec::chkSyntax()
                 if (code.kind == EofLine) break;
                 else if (code.kind == ',') code = nextCode(); 
                 else errorExit(tecINCORRECT_SYNTAX, "Wrong declear syntax");
+
                 if (code.kind != DeclareArr && code.kind != DeclareVar)
                     errorExit(tecINCORRECT_SYNTAX, "Need declear syntax"); 
                 removeDbgCode();
@@ -226,8 +227,7 @@ void
 MareInitExec::assignVariable(bool strict)
 {
     CodeSet save = code;
-    DtType dt = symTablePt(code)->dtTyp;
-    //SymKind sk = symTablePt(code)->symKind;
+    
     bool isArray;
     getMemAdrs(code, isArray);                            /* 좌변 주소 확인 */
     if (code.kind == '.') {
@@ -236,7 +236,8 @@ MareInitExec::assignVariable(bool strict)
     }
     if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
 
-    returnValue.init(dt); 
+    DtType dt = symTablePt(save)->dtTyp;
+    returnValue.init(dt);
     returnValue = getInitVar(dt);
     addDbgCode(code);
     if (code.kind == '=')
@@ -274,8 +275,8 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode)
     }
     else if (code.symIdx == Push) {
         code = nextCode();
-        VarObj vo = getExpression_syntax('(', ')');
-        // vo의 타입이 백터의 타입과 같은지?
+        returnValue.init(symTablePt(varCode)->dtTyp);
+        returnValue = getExpression_syntax('(', ')');
     }
     else errorExit(tecINCORRECT_SYNTAX);
 }
@@ -302,7 +303,7 @@ MareInitExec::getMemAdrs(CodeSet const& cd, bool& isDataObj)
     d = getExpression_syntax('[', ']').getDbl(); 
     if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index value of array must be a positive integer only.");
     return adr;               /* 구문 검사인 경우 */
- }
+}
 
 /** 
  * expression 계산 후, 결과를 반환

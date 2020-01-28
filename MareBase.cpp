@@ -175,14 +175,11 @@ MareBase::kind2Skip(TknKind kd)
 string 
 MareBase::kind2Str(TknKind kd) 
 {
-    //std::cout << std::endl << "  ** kind2Str s: " << (short)kd;
     auto m_iter = kindMapDBG.find(kd);
-    //std::cout << "  **? " << (short)m_iter->first;
     if (m_iter != kindMapDBG.end()){
-        //std::cout << "  **ok " << m_iter->second;
         return m_iter->second;
     }
-    std::cout << std::endl << "  ** kind2Str : " << (short)kd;
+    //std::cout << std::endl << "  ** kind2Str : " << (short)kd;
     return "";
 }
 

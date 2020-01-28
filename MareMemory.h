@@ -150,7 +150,11 @@ class MareStack {
         ~MareStack() { 
             /* 종료시, 메모리 정리 */
             cout << endl << " * MareStack destructor: " << st.size(); 
-            while (!st.empty()) { VarObj kk = st.top(); st.pop(); cout << endl << "  - " << kk.toFullString(true);  } 
+            while (!st.empty()) { 
+                VarObj kk = st.top(); 
+                st.pop(); 
+                cout << endl << "  - " << kk.toFullString(true);  
+            } 
         }
 
         void push(VarObj n) { st.push(n); }

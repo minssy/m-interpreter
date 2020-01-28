@@ -931,7 +931,7 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     if (kind == funcId) n = searchName(tb.name, 'G');
     if (kind == paraId) n = searchName(tb.name, 'L');
     if (n != -1) errorExit(tecINVALID_NAME, "Duplicated name: ", tb.name);
-    JLOG(mutil.j_.trace()) << "memory_size:" << mem_size;
+
     // 주소 설정
     if (kind == funcId) 
         tb.adrs = getLineNo();                                 /* 함수 시작 행 정보 저장 */
