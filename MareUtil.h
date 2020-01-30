@@ -43,7 +43,7 @@ enum VariableGetAPI {
     // ToDbl,
 
     /* array, vector */
-    Find = 51, // find
+    IndexOf = 51, // find
 
 };
 

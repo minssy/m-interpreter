@@ -42,6 +42,6 @@ sCnt.resize(9)
 log("sCnt (size:", sCnt.size(), ")")
 sCnt[7] = "aaa"
 
-log("array indexOf(2) : ", iCnt.find(2))
+log("array indexOf(2) : ", iCnt.indexOf(2))
 
 log("Done.")

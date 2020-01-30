@@ -28,7 +28,7 @@ MareUtil::initSubCmdList()
 
     itemlist_.insert(make_pair("toString", ToString));
 
-    itemlist_.insert(make_pair("find", Find));
+    itemlist_.insert(make_pair("indexOf", IndexOf));
 
     // ----- Set Property -----
     itemlist_.insert(make_pair("resize", Resize));
@@ -61,7 +61,7 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
                 if (k == Now || k == Today) return k;
                 break;
             case GetProperty:
-                if (k >= Size && k <= Find) return k;
+                if (k >= Size && k <= IndexOf) return k;
                 break;
             case SetProperty:
                 if (k >= Resize && k <= Pop) return k;
@@ -84,7 +84,7 @@ MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
         switch (k) {
             case Size:
             case ToString:
-            case Find:
+            case IndexOf:
                 tk = GetProperty;
                 return k;
             case Resize:

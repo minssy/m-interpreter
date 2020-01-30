@@ -699,7 +699,7 @@ MareExecuter::factor()
                     if (tmpSz == NOT_DEFINED_ARRAY) tmpSz = 0;
                     mstk.push(INT_T, tmpSz);
                 }
-                else if (code.symIdx == Find) {
+                else if (code.symIdx == IndexOf) {
                     code = nextCode();
                     //expression('(', 0);
                     //VarObj compObj = mstk.pop();

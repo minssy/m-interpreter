@@ -403,7 +403,7 @@ MareInitExec::factor_syntax()
             addDbgCode(code);
             if (isArray) {
                 if (code.symIdx == Size) tmpTp = INT_T;
-                else if (code.symIdx == Find) { 
+                else if (code.symIdx == IndexOf) { 
                     code = nextCode(); code = chkNextCode(code, '(');
                     DtType tmpTp2 = getExpression_syntax(0, 0).getType();
                     if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
