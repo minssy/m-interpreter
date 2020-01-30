@@ -482,6 +482,17 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
             DynamicMem.set(varAdrs + osz, vo);
             isUpdatedSymbols = true;
         }
+        else if (code.symIdx == Pop) {
+            code = nextCode();
+            int osz = symTablePt(save)->aryLen;
+            if (osz == 0 || osz == NOT_DEFINED_ARRAY)
+                errorExit(tecEXCEED_ARRAY_LENGTH);
+            --osz;
+            symTablePt(save)->aryLen = osz;
+            VarObj vo;
+            DynamicMem.set(varAdrs + osz, vo);
+            isUpdatedSymbols = true;
+        }
         else throw tecINCORRECT_SYNTAX;
         removeDbgCode(); removeDbgCode(); 
         return;
@@ -678,8 +689,8 @@ MareExecuter::factor()
         bool isArray;
         int varAdrs = getMemAdrs(code, isArray);
         VarObj oo = DynamicMem.get(varAdrs);
-        JLOG(mutil.j_.trace()) << " ** " << kind2Str((TknKind)tmpTp) << " -> " << oo.toFullString(true);
-        if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
+        JLOG(mutil.j_.trace()) << " ** idObj:" << isArray << " "
+            << kind2Str((TknKind)tmpTp) << " -> " << oo.toFullString(true);
         
         if (code.kind == '.') {                    /* 변수의 값이 아닌 속성(함수)일 경우 */
             code = nextCode();
@@ -717,6 +728,7 @@ MareExecuter::factor()
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (array's property function)");
             }
             else {
+                if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
                 if (code.symIdx == ToString)
                     mstk.push(STR_T, oo.toStr());
                 else if (code.symIdx == Size)
@@ -727,6 +739,7 @@ MareExecuter::factor()
             code = nextCode(); code = nextCode(); code = nextCode();
         }
         else {
+            if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
             if (oo.getType() == tmpTp) mstk.push(oo); 
             else { VarObj onw(tmpTp, oo); mstk.push(onw); }
         
@@ -1052,15 +1065,16 @@ MareExecuter::setParams(vector<VarObj>& vs, short numOfParams) {
 int 
 MareExecuter::getMemAdrs(CodeSet const& cd, bool& isDataObj)
 {
-    int adr=0, len;
+    int adr=0, len, capa;
     isDataObj = false;
     adr = getTopAdrs(cd);
     len = symTablePt(cd)->aryLen;
+    capa = symTablePt(cd)->args;
     code = nextCode();
-    if (len == 0) return adr;                     /* 변수가 배열이 아닌 경우 */
+    if (capa == 0) return adr;                    /* 변수가 배열이 아닌 경우 */
 
     if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
-        if (len > 0) isDataObj = true;            /* 배열 자체를 지정 */
+        if (capa > 0) isDataObj = true;           /* 배열 자체를 지정 */
         return adr;
     }
     if (len == NOT_DEFINED_ARRAY)

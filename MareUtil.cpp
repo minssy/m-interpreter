@@ -11,7 +11,7 @@ map<string, short>
 MareUtil::initSubCmdList() 
 {
     map<string, short> itemlist_;
-
+    // ----- math function -----
     itemlist_.insert(make_pair("ceil", Ceil));
     itemlist_.insert(make_pair("floor", Floor));
     itemlist_.insert(make_pair("abs", Abs));
@@ -19,6 +19,7 @@ MareUtil::initSubCmdList()
     itemlist_.insert(make_pair("sqrt", Sqrt));
     itemlist_.insert(make_pair("round", Round));
 
+    // ----- Get Property -----
     itemlist_.insert(make_pair("now", Now));
     itemlist_.insert(make_pair("today", Today));
 
@@ -27,10 +28,13 @@ MareUtil::initSubCmdList()
 
     itemlist_.insert(make_pair("toString", ToString));
 
-    itemlist_.insert(make_pair("fine", Find));
+    itemlist_.insert(make_pair("find", Find));
+
+    // ----- Set Property -----
     itemlist_.insert(make_pair("resize", Resize));
 
     itemlist_.insert(make_pair("push", Push));
+    itemlist_.insert(make_pair("pop", Pop));
 
     return itemlist_;
 }
@@ -60,7 +64,7 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
                 if (k >= Size && k <= Find) return k;
                 break;
             case SetProperty:
-                if (k == Resize || k == Push) return k;
+                if (k >= Resize && k <= Pop) return k;
                 break;
             case Math:
                 if (k >= Ceil && k <= Round) return k;
@@ -85,6 +89,7 @@ MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
                 return k;
             case Resize:
             case Push:
+            case Pop:
                 tk = SetProperty;
                 return k;
         }

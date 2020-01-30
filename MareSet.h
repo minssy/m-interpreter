@@ -55,6 +55,7 @@ enum TknKind {
   VarStr, 
   VarDateTime, 
   Vector,
+  ArrayList,
 
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
   
@@ -82,10 +83,6 @@ enum TknKind {
   // 단독형 함수
   Require=160, Exit, Log, Throws, 
   ToArray,
- 
-  // 변수/배열 귀속형 함수
-  //ToString=180, 
-  /*Length,*/ //Size, Find,  
 
   /* 디버깅용 */
   Expression=231, // 일반식

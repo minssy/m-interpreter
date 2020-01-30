@@ -278,6 +278,11 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode)
         returnValue.init(symTablePt(varCode)->dtTyp);
         returnValue = getExpression_syntax('(', ')');
     }
+    else if (code.symIdx == Pop) {
+        code = nextCode();
+        code = chkNextCode(code, '(');
+        code = chkNextCode(code, ')');
+    }
     else errorExit(tecINCORRECT_SYNTAX);
 }
 

@@ -34,7 +34,7 @@ enum VariableGetAPI {
     /* system */
     Now = 31,
     Today,
-    /* common */
+    /* common (string, array, vector) */
     Size = 41,
     /* int, double */
     ToString,
@@ -42,16 +42,22 @@ enum VariableGetAPI {
     // ToInt,
     // ToDbl,
 
-    /* array */
-    Find = 51,
+    /* array, vector */
+    Find = 51, // find
 
 };
 
 enum VariableSetAPI {
 
-    /* array */
+    /* vector */
     Resize = 61,
+    Reserve,
     Push,
+    Pop,
+    Insert,
+    Erase,
+    Clear,
+
 };
 
 class MareUtil {
