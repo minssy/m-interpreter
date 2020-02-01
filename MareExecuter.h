@@ -20,6 +20,7 @@ protected:
     MareExecuter(int startPc, MareUtil &util) : MareBase(startPc, util), returnValue() {}
 
     VarObj returnValue;                            /* 함수의 반환 값 저장용 */
+    SymKind varSymType;                            /* getMemAdrs 함수용 */
 
     MareStack mstk; 
     unsigned short readedCodeCnt;
@@ -59,7 +60,7 @@ private:
     void setInitArray();
     void assignVariable(CodeSet const save, bool declare=false);
 
-    int  getMemAdrs(CodeSet const& cd, bool& isDataObj);
+    int  getMemAdrs(CodeSet const& cd, SymKind& objType);
     VarObj getExpression(short kind1=0, short kind2=0);
     void expression(short kind1, short kind2);    
     void term(short n);

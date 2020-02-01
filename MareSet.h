@@ -136,11 +136,15 @@ enum ExpressionType {
 
 /** 심볼 테이블 등록되는 타입 */
 enum SymKind {
-    noId = 0, 
+    noId = 0,
+    /* symbol 등록시 사용 */
     funcId,
-    varId,      
+    varId,
     paraId,
-};  
+    /* symbol 등록중, varId, paraId로 부터 변경 */
+    arrayId,
+    vectorId,
+};
 
 /** 심볼 테이블 구성 */
 struct SymTbl
@@ -166,8 +170,10 @@ struct SymTbl
             str.reserve(45);      // 메모리 확보
 
             if (symKind == funcId) { str.append("Function "); }
-            else if (symKind == varId) { str.append("Variable "); }            
-            else if (symKind == paraId) { str.append("Parameter "); }
+            else if (symKind == varId) { str.append("Variable "); }
+            else if (symKind == paraId) { str.append("Param "); }
+            else if (symKind == arrayId) { str.append("Array "); }
+            else if (symKind == vectorId) { str.append("Vector "); }
             else if (symKind == noId) { str.append("none-symbol "); }
             else { str.append("Wrong-symble-type:").append(std::to_string((int)symKind)); return str; }
 

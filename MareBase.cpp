@@ -324,6 +324,8 @@ MareBase::errorExit(int err, string a, string b) {
     
     JLOG(mutil.j_.trace()) << " [Exit by Contract Exception] " << transToken(err)
                            << " -code: " << to_string(err) << " -message: " << msg;
+    
+    JLOG(mutil.j_.trace()) << printInfos();
 
     //throw err;
     if (Pc == -1) {
@@ -361,27 +363,29 @@ MareBase::errorExit(int err, string a, string b) {
 
 /* ============ 디버깅용 ============ */
 string 
-MareBase::printInfos() {
+MareBase::printInfos(bool all) {
 
-    int max =  intenalCode.size();
-    cout << endl << "  ************** intenalCode (" << max << ")************ ";
-    int i=0;
-    for (i=0; i<max; i++){
-        char* tt = intenalCode[i];
-        cout << endl << debugInterCode(tt, i);
-    }
+    int max = 0;
+    int i = 0;
+    if (all) {
+        max =  intenalCode.size();
+        cout << endl << "  ************** intenalCode (" << max << ")************ ";
+        for (i=0; i<max; i++){
+            char* tt = intenalCode[i];
+            cout << endl << debugInterCode(tt, i);
+        }
 
-    max =  nbrLITERAL.size();
-    cout << endl << "  ************** number LITERAL (" << max << ")********* ";
-    for (i=0; i<max; i++){
-        cout << endl << " " << i << ": " << nbrLITERAL[i];
+        max =  nbrLITERAL.size();
+        cout << endl << "  ************** number LITERAL (" << max << ")********* ";
+        for (i=0; i<max; i++){
+            cout << endl << " " << i << ": " << nbrLITERAL[i];
+        }
+        max =  strLITERAL.size();
+        cout << endl << "  ************** string LITERAL (" << max << ")********* ";
+        for (i=0; i<max; i++){
+            cout << endl << " " << i << ": '" << strLITERAL[i] << "'";
+        }
     }
-    max =  strLITERAL.size();
-    cout << endl << "  ************** string LITERAL (" << max << ")********* ";
-    for (i=0; i<max; i++){
-        cout << endl << " " << i << ": '" << strLITERAL[i] << "'";
-    }
-    
     max =  Gtable.size();
     cout << endl << "  ************** Global Table (" << max << ")*********** ";
     cout << endl << "id kind type adr len args frame : name";
@@ -400,7 +404,7 @@ MareBase::printInfos() {
 
     cout << endl << DynamicMem.to_string();
 
-    cout << endl << "  ********************************************" << endl;
+    cout << endl << "  ******************************************" << endl;
     return "";
 }
 

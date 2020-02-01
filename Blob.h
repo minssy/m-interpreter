@@ -31,6 +31,7 @@ enum TECcodes
     tecINVALID_NAME,              // tecINVALID_VARIABLE_NAME, tecINVALID_FUNC_NAME 포함
     tecNO_VARIABLE,               // 변수를 미선언한 상태로 사용
     tecNEED_INIT_VARIABLE,        // 초기화하지 않은 변수 사용
+    tecNEED_INITIALIZE,           // 초기화하지 않은 배열 타입 사용
     tecINVALID_VARIABLE_TYPE,     // 변수를 정의한 type과 데입한 값의 타입이 불일치
     tecEXCEED_ARRAY_LENGTH,    
     tecBAD_MULTI_DIMENTION_ARRAY,
@@ -92,9 +93,10 @@ static std::map<int, std::string> setVector() {
     str.insert(std::make_pair(173, "tecNO_VARIABLE"));
 
     str.insert(std::make_pair(174, "tecNEED_INIT_VARIABLE"));
-    str.insert(std::make_pair(175, "tecINVALID_VARIABLE_TYPE"));
-    str.insert(std::make_pair(176, "tecEXCEED_ARRAY_LENGTH"));
-    str.insert(std::make_pair(177, "tecBAD_MULTI_DIMENTION_ARRAY"));
+    str.insert(std::make_pair(tecNEED_INITIALIZE, "tecNEED_INITIALIZE"));
+    str.insert(std::make_pair(tecINVALID_VARIABLE_TYPE, "tecINVALID_VARIABLE_TYPE"));
+    str.insert(std::make_pair(tecEXCEED_ARRAY_LENGTH, "tecEXCEED_ARRAY_LENGTH"));
+    //str.insert(std::make_pair(tecBAD_MULTI_DIMENTION_ARRAY, "tecBAD_MULTI_DIMENTION_ARRAY"));
 
     str.insert(std::make_pair(178, "tecNO_FUNC"));
     str.insert(std::make_pair(179, "tecINVALID_FUNC_ARGUMENT"));

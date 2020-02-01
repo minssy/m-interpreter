@@ -31,6 +31,9 @@ foreach (y : iCnt) {
     log (j++, " : ", y)
 }
 
+log("array indexOf(8, 3) : ", iCnt.indexOf(8, 3))
+log("array indexOf(5, 3, 5) : ", iCnt.indexOf(5, 3, 5))
+
 iCnt.resize(4)
 log("iCnt (size:", iCnt.size(), ")")
 j=0

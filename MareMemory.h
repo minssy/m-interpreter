@@ -122,10 +122,18 @@ public:
     /** 디버깅용 */
     string to_string() {
         int max = mem.size();
-        string str1("  ****** memory (allocated:");
-        str1.append(std::to_string(max)).append(")*****");
+        string str1("  ****** global memory (allocated:");
+        str1.append(std::to_string(max)).append(")*********");
         for(int i=0; i< max; i++){
             VarObj dd = mem[i];
+            if (i < 2 || dd.getDataTypeStr(dd.getType()).compare("NON_T") != 0)
+                str1.append("\n").append(std::to_string(i)).append(" : ").append(dd.toFullString(true));
+        }
+        str1.append("\n").append("  ****** local memory (allocated:");
+        str1.append(std::to_string(mem_local_size)).append(")**********");
+        max = memLocal.size();
+        for(int i=0; i< max; i++){
+            VarObj dd = memLocal[i];
             if (i < 2 || dd.getDataTypeStr(dd.getType()).compare("NON_T") != 0)
                 str1.append("\n").append(std::to_string(i)).append(" : ").append(dd.toFullString(true));
         }

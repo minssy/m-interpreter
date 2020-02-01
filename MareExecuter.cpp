@@ -198,7 +198,6 @@ MareExecuter::statement()
     short top_line, end_line;
     int varAdrs;
     VarObj wkVal;
-    bool isArray;
 
     if (Pc>maxCodeLine || exitFlag) return;                 /* 프로그램 종료 */
 
@@ -279,15 +278,17 @@ MareExecuter::statement()
     {
         code = nextCode(); code = nextCode();
         wkVal.init(symTablePt(code)->dtTyp);                /* 제어변수 타입 설정 */
-        varAdrs = getMemAdrs(code, isArray);                /* 제어 변수의 주소 구하기 */
-        code = nextCode();
+        int varAdrs = getMemAdrs(code, varSymType);         /* 제어 변수의 주소 구하기 */
+        code = nextCode();                                  /* skip ':' */
         int idxAdr = getTopAdrs(code);                      /* 배열 변수의 시작주소 구하기 */
         unsigned short idxLen = symTablePt(code)->aryLen;
+        if (idxLen == 0 || idxLen == NOT_DEFINED_ARRAY)
+            errorExit(tecNEED_INITIALIZE);
         idxLen += idxAdr;
-        for (short i=idxAdr; i<idxLen; i++) {
+        for (int i=idxAdr; i<idxLen; i++) {
             wkVal = DynamicMem.get(i);                      /* 제어변수에 할당할 초기값 가져오기 */
             DynamicMem.set(varAdrs, wkVal);                 /* 제어변수 값 업데이트 */
-
+            cout << endl << " foreach:" << wkVal.toFullString(true);
             Pc=(top_line + 1);                              /* for문 데이터의 시작 위치로  */
             block();                                        /* block을 실행 */
             if (breakFlag || returnFlag || exitFlag) {      /* 플래그 상태에 따른 분기 처리 */
@@ -300,7 +301,7 @@ MareExecuter::statement()
     }
     case For:										        /* for : 제어변수, 초깃값, 최종값, 증분식 */
         code = nextCode(); save = nextCode();
-        varAdrs = getMemAdrs(save, isArray);                /* 제어 변수의 주소 구하기 */
+        varAdrs = getMemAdrs(save, varSymType);             /* 제어 변수의 주소 구하기 */
         expression('=', ';');                               /* 제어 변수의 초기값 계산 */
 
         if (!isNumericType(mstk.topType())) 
@@ -384,7 +385,7 @@ MareExecuter::statement()
     {
         TknKind ctk = code.kind;
         code = nextCode(); 
-        int varAdrs = getMemAdrs(code, isArray);       /* 저장할 변수 주소 */
+        int varAdrs = getMemAdrs(code, varSymType);    /* 저장할 변수 주소 */
         VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
         if (ctk == DBPlus) ++old;
         else --old;
@@ -433,8 +434,7 @@ void
 MareExecuter::assignVariable(CodeSet const save, bool declare) 
 {
     addDbgCode(save);
-    bool isArray;
-    int varAdrs = getMemAdrs(code, isArray);       /* 저장할 변수 주소 */
+    int varAdrs = getMemAdrs(code, varSymType);       /* 저장할 변수 주소 */
     
     if (code.kind == '.') {                            /* setProperty 처리 */
         code = nextCode();
@@ -498,7 +498,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
         return;
     }
 
-    if (isArray) errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
+    if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
     VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
     JLOG(mutil.j_.trace()) << " * type:" << kind2Str(save.kind)
             << " varAdrs:" << varAdrs << " " << old.toFullString(true);
@@ -627,7 +627,8 @@ void
 MareExecuter::factor() 
 {
     addDbgCode(code);
-    TknKind kd = code.kind;    
+    TknKind kd = code.kind;
+    SymKind varSymType;
     JLOG(mutil.j_.trace()) << " *** factor:'" << kind2Str(kd) << "':" << kind2Str(code);
 
     switch (kd) {                                  /* 실행시 */
@@ -652,9 +653,8 @@ MareExecuter::factor()
         code = nextCode();
         {
             // DtType tmpTp = symTablePt(code)->dtTyp; /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
-            bool isArray;
             addDbgCode(code);
-            int varAdrs = getMemAdrs(code, isArray);
+            int varAdrs = getMemAdrs(code, varSymType);
             VarObj oo = DynamicMem.get(varAdrs);
             if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
             if (kd == DBPlus) ++oo;
@@ -686,33 +686,44 @@ MareExecuter::factor()
         {
         DtType tmpTp = symTablePt(code)->dtTyp;    /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
         unsigned short tmpSz = symTablePt(code)->aryLen;
-        bool isArray;
-        int varAdrs = getMemAdrs(code, isArray);
+        int varAdrs = getMemAdrs(code, varSymType);
         VarObj oo = DynamicMem.get(varAdrs);
-        JLOG(mutil.j_.trace()) << " ** idObj:" << isArray << " "
+        JLOG(mutil.j_.trace()) << " ** idObjType:" << varSymType << " "
             << kind2Str((TknKind)tmpTp) << " -> " << oo.toFullString(true);
         
         if (code.kind == '.') {                    /* 변수의 값이 아닌 속성(함수)일 경우 */
             code = nextCode();
-            if (isArray) {
+            if (varSymType == varId) {
+                if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
+                if (code.symIdx == ToString)
+                    mstk.push(STR_T, oo.toStr());
+                else if (code.symIdx == Size)
+                    mstk.push(INT_T, oo.toStr().length());
+                else 
+                    errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");
+            }
+            else {
                 if (code.symIdx == Size) {
                     if (tmpSz == NOT_DEFINED_ARRAY) tmpSz = 0;
                     mstk.push(INT_T, tmpSz);
                 }
                 else if (code.symIdx == IndexOf) {
                     code = nextCode();
-                    //expression('(', 0);
-                    //VarObj compObj = mstk.pop();
                     VarObj compObj = getExpression('(', 0);
                     int startIdx = 0;
                     if (code.kind == ',') {
                         code = nextCode(); 
-                        startIdx = getExpression(0, ')').getDbl();
-                        // expression(0, ')');
-                        // startIdx = mstk.pop().getDbl();
-                        if (startIdx >= tmpSz) errorExit(tecEXCEED_ARRAY_LENGTH);
+                        startIdx = getExpression(0, 0).getDbl();
+                        if (startIdx >= tmpSz) errorExit(tecEXCEED_ARRAY_LENGTH, "start_index");
+                        if (code.kind == ',') {
+                            code = nextCode();
+                            int range = getExpression(0, 0).getDbl();
+                            if (range < 1) errorExit(tecNEED_UNSIGNED_INTEGER, "search_range");
+                            if (startIdx + range < tmpSz)
+                                tmpSz = startIdx + range;
+                        }
                     }
-                    else code = nextCode();        /* ')' skip */
+                    code = nextCode();             /* ')' skip */
                     bool isFind = false;
                     for (int adr=startIdx; adr<tmpSz; adr++) {
                         if ((compObj == DynamicMem.get(adr + varAdrs)).getDbl()){
@@ -726,15 +737,6 @@ MareExecuter::factor()
                 }
                 else 
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (array's property function)");
-            }
-            else {
-                if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
-                if (code.symIdx == ToString)
-                    mstk.push(STR_T, oo.toStr());
-                else if (code.symIdx == Size)
-                    mstk.push(INT_T, oo.toStr().length());
-                else 
-                    errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");
             }
             code = nextCode(); code = nextCode(); code = nextCode();
         }
@@ -905,11 +907,10 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
             JLOG(mutil.j_.trace()) << " ** param type: " << kind2Str((TknKind)tmpTp);
             addDbgCode(Expression, SET_PARAMETER_TYPE, i++);
             int varArgs;
-            bool isArray;
             if (argCnt > 0) {
                 argCnt--;
-                varArgs = getMemAdrs(code, isArray);
-                // if (isArray) errorExit(tecNEED_VARIABLE_TYPE, "배열을 인자값으로 할당 불가");
+                varArgs = getMemAdrs(code, varSymType);
+                // if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "배열을 인자값으로 할당 불가");
                 VarObj oo = mstk.pop();
                 JLOG(mutil.j_.trace()) << " ** param assign value: "
                      << oo.toFullString(true) << " args:" << varArgs;
@@ -966,11 +967,18 @@ MareExecuter::execSysFunc()
         {
         code = nextCode();
         code = nextCode();                              /* toArray, '(' 건너뜀 */
-        DtType tmpTp = symTablePt(code)->dtTyp;         /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
-        bool isArray;
-        int varAdrs = getMemAdrs(code, isArray);
-        v.init(tmpTp);
+        auto varPt = symTablePt(code);                  /* 변수 속성 : 순서에 주의 (getMemAdrs보다 먼저) */
+        int varAdrs = getMemAdrs(code, varSymType);
+        v.init(varPt->dtTyp);
+        int maxIdx = varPt->aryLen;
+        if (maxIdx == 0 || maxIdx == NOT_DEFINED_ARRAY)
+            errorExit(tecNEED_INITIALIZE);
+        maxIdx += varAdrs;
+
         while (code.kind == ','){                       /* ',' 라면 인수가 계속됨 */  
+            if (varAdrs >= maxIdx) 
+                errorExit(tecEXCEED_ARRAY_LENGTH, "The index of array is out of range.");
+
             code = nextCode();
             v = getExpression(0, 0);
             DynamicMem.set(varAdrs++, v);
@@ -1063,20 +1071,24 @@ MareExecuter::setParams(vector<VarObj>& vs, short numOfParams) {
  * 단순 변수 또는 배열 요소의 주소를 반환. 
  * 배열인지 확인하기 위해 내부적으로 nextCode()를 호출함 */
 int 
-MareExecuter::getMemAdrs(CodeSet const& cd, bool& isDataObj)
+MareExecuter::getMemAdrs(CodeSet const& cd, SymKind& objType)
 {
-    int adr=0, len, capa;
-    isDataObj = false;
+    int adr;
     adr = getTopAdrs(cd);
-    len = symTablePt(cd)->aryLen;
-    capa = symTablePt(cd)->args;
+    auto symPt = symTablePt(cd);
+    objType = symPt->symKind;
+    if (objType == paraId) objType = varId;
+
     code = nextCode();
-    if (capa == 0) return adr;                    /* 변수가 배열이 아닌 경우 */
+    if (objType == varId) return adr;             /* 변수가 배열이 아닌 경우 */
 
     if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
-        if (capa > 0) isDataObj = true;           /* 배열 자체를 지정 */
         return adr;
     }
+    
+    objType = varId;                              /* 배열등의 요소임 */
+
+    int len = symPt->aryLen;
     if (len == NOT_DEFINED_ARRAY)
         errorExit(tecNEED_INIT_VARIABLE, "need initialized.");
 

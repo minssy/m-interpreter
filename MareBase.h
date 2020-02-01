@@ -29,7 +29,7 @@ public:
 
     /* 디버깅용 */
     void debugging(string const& msg, int lvl);
-    string printInfos();
+    string printInfos(bool all=true);
 
     /** 에러 처리 */
     void errorExit(int err, string a="\1", string b="\1");

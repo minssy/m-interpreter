@@ -15,12 +15,15 @@ log ("***** ", cnt++, " *****")
 y = 7.5
 double n
 func double sumAdd (double xx) {
-  y += xx
-  return y
+    int ik = xx
+    double dk = math.ceil(xx)
+    log(" -sumAdd: double:", xx, " (int:", ik, ", math.ceil:", dk, ")")
+    y += xx
+    return y
 }
-n = sumAdd (3.0)
-// 변수 n의 값은 10.5가 됨.
-log ("n=", n, " == 10.5")
+n = sumAdd (3.1)
+// 변수 n의 값은 10.6가 됨.
+log ("n=", n, " == 10.6")
 
 log ("***** ", cnt++, " *****")
 int ix = 3

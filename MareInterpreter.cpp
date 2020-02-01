@@ -546,10 +546,7 @@ MareInterpreter::chkVarName(Token const& tk)
     if (tk.kind != Ident) 
         errorExit(tecINVALID_NAME, "Duplicated identifier: ", tk.text);
 
-    //if (tk.text[0] != '$')
-    //    errorExit("변수 명은 $로 시작해야 합니다: ", tk.text);
-
-    char chkTp = isLocalScope() ? 'V' : 'A';        
+    char chkTp = isLocalScope() ? 'V' : 'A';
     if (searchName(tk.text, chkTp) != -1)
             errorExit(tecINVALID_NAME, "Duplicated variable name: ", tk.text);
 }
@@ -591,6 +588,8 @@ MareInterpreter::setSymAryLen()
     token = chkNextTkn(nextTkn(), ']');
     if (token.kind == '[') 
         errorExit(tecBAD_MULTI_DIMENTION_ARRAY, "Multi-dimensional arrays cannot be declared.");
+
+    tmpTb.symKind = arrayId;
 }
 
 void 
@@ -606,7 +605,8 @@ MareInterpreter::vectorDeclare()
     chkVarName(token);                     /* 이름 검사 */
     setSymName(varType);                   /* 변수 등록에 사용될 SymTbl 셋팅 */
     //setSymAryLen();                        /* 길이 정보 설정 */
-    tmpTb.aryLen = NOT_DEFINED_ARRAY;
+    tmpTb.aryLen = NOT_DEFINED_ARRAY;      /* 초기 배열 크기: 65535(== 0) */
+    tmpTb.symKind = vectorId;
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
 
     setCodeEofLine();
@@ -917,16 +917,16 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     mem_size = tb.aryLen;
     if (mem_size == 0) mem_size = 1;                           /* 단순 변수일 때 처리 */
     else if (mem_size == NOT_DEFINED_ARRAY) { 
-        mem_size = MEMORY_BACK_RESIZE;                         /* vector */
+        mem_size = MEMORY_BACK_RESIZE;                         /* vector 셋팅 */
         tb.args = MEMORY_BACK_RESIZE;
     }
     else {
-        tb.args = tb.aryLen;                                   /* fixed array */
+        tb.args = tb.aryLen;                                   /* fixed array 셋팅 */
     }
     if (kind == funcId && tb.name[0] == '$')                   /* 함수인 경우, '$' 사용불가 */
         errorExit(tecINVALID_NAME, "Don't allow '$' except variable name: ", tb.name);
 
-    tb.symKind = kind;
+    if (tb.symKind == noId) tb.symKind = kind;
     n = -1;                                                    /* 중복 여부 확인 */
     if (kind == funcId) n = searchName(tb.name, 'G');
     if (kind == paraId) n = searchName(tb.name, 'L');

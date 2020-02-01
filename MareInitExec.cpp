@@ -4,7 +4,7 @@
 
 namespace mare_vm {
 
-    /* 구문 검사 */
+/* 구문 검사 */
 void 
 MareInitExec::verifySyntax() 
 {
@@ -24,7 +24,6 @@ MareInitExec::chkSyntax()
     readedCodeCnt = 0;
     short sz = intenalCode.size();
     DtType dt;
-    bool isArray;
 
     for (Pc=1; Pc<sz; Pc++) {
 
@@ -69,7 +68,7 @@ MareInitExec::chkSyntax()
         case DeclareArr:
         case DeclareVar: 
             do {
-                isArray = false;
+                bool isArray = false;
                 if (code.kind == DeclareArr) isArray = true;
                 code = nextCode();
                 addDbgCode(code);
@@ -109,13 +108,12 @@ MareInitExec::chkSyntax()
             code = nextCode();
             code = chkNextCode(code, '(');
             dt = symTablePt(code)->dtTyp;                     /* 임시 변수 타입 */
-            if (symTablePt(code)->aryLen != 0) errorExit(tecNEED_VARIABLE_TYPE);
-            getMemAdrs(code, isArray);                        /* 임시 변수 주소 */
+            getMemAdrs(code, varSymType);                     /* 임시 변수 주소 */
+            if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE);
             code = chkNextCode(code, ':');
-            if (symTablePt(code)->dtTyp != dt) errorExit(tecINCORRECT_TYPE); 
-            if (symTablePt(code)->aryLen == 0) errorExit(tecNEED_ARRAY_TYPE);
-            getMemAdrs(code, isArray);
-            if (!isArray) errorExit(tecNEED_ARRAY_TYPE);
+            if (symTablePt(code)->dtTyp != dt) errorExit(tecINCORRECT_TYPE);
+            getMemAdrs(code, varSymType);
+            if (varSymType == varId) errorExit(tecNEED_ARRAY_TYPE);
             code = chkNextCode(code, ')');
             chkEofLine();
             break;
@@ -123,8 +121,8 @@ MareInitExec::chkSyntax()
             code = nextCode();
             code = chkNextCode(code, '(');
             addDbgCode(Expression, CONDITIONAL_TYPE, 1);
-            getMemAdrs(code, isArray);                        /* 제어 변수 주소 */
-            if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
+            getMemAdrs(code, varSymType);                     /* 제어 변수 주소 */
+            if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE);
             getExpression_syntax('=', ';');                   /* 초깃값 */            
             changeDbgCode(Expression, CONDITIONAL_TYPE, 0);
             if (code.kind == ';') code = nextCode();          /* 증분값 없음 */
@@ -172,8 +170,8 @@ MareInitExec::chkSyntax()
             code = nextCode(); 
             if (!isNumericType(symTablePt(code)->dtTyp))
                 errorExit(tecNEED_NUMBER_TYPE, "Numeric Type only (++, --)");
-            getMemAdrs(code, isArray);                     /* 좌변 주소 확인 */
-            if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
+            getMemAdrs(code, varSymType);                     /* 좌변 주소 확인 */
+            if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Leading operator (++, --)");
             chkEofLine();                                  /* 라인의 끝인지 확인 */
             break;
         default:
@@ -227,14 +225,13 @@ void
 MareInitExec::assignVariable(bool strict)
 {
     CodeSet save = code;
-    
-    bool isArray;
-    getMemAdrs(code, isArray);                            /* 좌변 주소 확인 */
+    SymKind varSymType;
+    getMemAdrs(code, varSymType);                            /* 좌변 주소 확인 */
     if (code.kind == '.') {
         if (strict) errorExit(tecNEED_VARIABLE_TYPE);
-        return setProperty_syntax(save);
+        return setProperty_syntax(save, varSymType);
     }
-    if (isArray) errorExit(tecNEED_VARIABLE_TYPE);
+    if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "type:", to_string((int)varSymType));
 
     DtType dt = symTablePt(save)->dtTyp;
     returnValue.init(dt);
@@ -260,25 +257,29 @@ MareInitExec::assignVariable(bool strict)
 }
 
 void
-MareInitExec::setProperty_syntax(CodeSet const& varCode)
+MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
 {
     code = nextCode(); 
     addDbgCode(code);
     if (code.kind != SetProperty)
         errorExit(tecINCORRECT_SYNTAX, "set property only");
+ 
     if (code.symIdx == Resize) {
         if (varCode.kind != Gvar) errorExit(tecINCORRECT_SYNTAX, "global variable only");
-        code = nextCode(); 
+        if (sk != arrayId) errorExit(tecINCORRECT_SYNTAX, "array only");
+        code = nextCode();
         double nsz = getExpression_syntax('(', ')').getDbl();
         if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
         if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
     }
     else if (code.symIdx == Push) {
+        if (sk != vectorId) errorExit(tecINCORRECT_SYNTAX, "vector only");
         code = nextCode();
         returnValue.init(symTablePt(varCode)->dtTyp);
         returnValue = getExpression_syntax('(', ')');
     }
     else if (code.symIdx == Pop) {
+        if (sk != vectorId) errorExit(tecINCORRECT_SYNTAX, "vector only");
         code = nextCode();
         code = chkNextCode(code, '(');
         code = chkNextCode(code, ')');
@@ -290,23 +291,23 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode)
  * 단순 변수 또는 배열 요소의 주소를 반환. 
  * 배열인지 확인하기 위해 내부적으로 nextCode()를 호출함 */
 int 
-MareInitExec::getMemAdrs(CodeSet const& cd, bool& isDataObj)
+MareInitExec::getMemAdrs(CodeSet const& cd, SymKind& objType)
 {
-    int adr=0, len;
-    isDataObj = false;
+    int adr=0;
     adr = getTopAdrs(cd);
-    len = symTablePt(cd)->aryLen;
+    objType = symTablePt(cd)->symKind;
+    if (objType == paraId) objType = varId;
+    cout << endl << "getMemAdrs:" << symTablePt(cd)->name << " " << objType;
     code = nextCode();
-    if (len == 0) return adr;                     /* 변수가 배열이 아닌 경우 */
+    if (objType == varId) return adr;             /* 변수가 배열이 아닌 경우 */
 
     if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
-        if (len > 0) isDataObj = true;            /* 배열 자체를 지정 */
          return adr;
     }
-
+    objType = varId;                              /* 배열등의 요소임 */
     double d;
     d = getExpression_syntax('[', ']').getDbl(); 
-    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index value of array must be a positive integer only.");
+    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
     return adr;               /* 구문 검사인 경우 */
 }
 
@@ -394,14 +395,14 @@ MareInitExec::factor_syntax()
     case Gvar: case Lvar:
         {
         DtType tmpTp = symTablePt(code)->dtTyp;
-        bool isArray;
-        getMemAdrs(code, isArray); 
+        SymKind varSymTypeTmp;
+        getMemAdrs(code, varSymTypeTmp); 
         if (code.kind == '.') {
             code = nextCode();
             if (code.kind != GetProperty)
                 errorExit(tecINCORRECT_SYNTAX, "get property only");
             addDbgCode(code);
-            if (isArray) {
+            if (varSymTypeTmp != varId) {
                 if (code.symIdx == Size) tmpTp = INT_T;
                 else if (code.symIdx == IndexOf) { 
                     code = nextCode(); code = chkNextCode(code, '(');
@@ -410,8 +411,14 @@ MareInitExec::factor_syntax()
                         errorExit(tecINVALID_VARIABLE_TYPE, "mismatch type");
                     if (code.kind == ',') { // 검색 시작 위치
                         code = nextCode();
-                        tmpTp2 = getExpression_syntax(0, ')').getType();
-                        if (!isNumericType(tmpTp2)) errorExit(tecNEED_NUMBER_TYPE);
+                        tmpTp2 = getExpression_syntax(0, 0).getType();
+                        if (!isNumericType(tmpTp2)) errorExit(tecNEED_NUMBER_TYPE, "start_index");
+                        if (code.kind == ',') {
+                            code = nextCode();
+                            tmpTp2 = getExpression_syntax(0, ')').getType();
+                            if (!isNumericType(tmpTp2)) errorExit(tecNEED_NUMBER_TYPE, "search_range");
+                        }
+                        else code = chkNextCode(code, ')');
                     }
                     else code = chkNextCode(code, ')');
                     mstk.push(INT_T, 1);
@@ -432,7 +439,7 @@ MareInitExec::factor_syntax()
             code = chkNextCode(code, ')');
             removeDbgCode();
         }
-        else if (isArray) {
+        else if (varSymTypeTmp != varId) {
             errorExit(tecNEED_VARIABLE_TYPE, "Invalid array type");
         }
         else {
@@ -494,7 +501,7 @@ MareInitExec::callFunction_syntax(int fncIdx, bool needReturn)
     if (paramTypes.size() > 0) {
         JLOG(mutil.j_.trace()) << " * check function param type";
         char* funcCode = intenalCode[Gtable[fncIdx].adrs];
-        funcCode += 5;   /* skip */
+        funcCode += 5;   /* skip code */
         TknKind kd_;
         int idx = 0;
         do {
@@ -552,21 +559,18 @@ MareInitExec::execSysFunc_syntax(bool needReturn)
     {
         code = nextCode();
         code = chkNextCode(code, '(');
-        DtType tmpTp = symTablePt(code)->dtTyp;    /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
-        unsigned short tmpSz = symTablePt(code)->aryLen;
-        if (tmpSz < 2) errorExit(tecNEED_ARRAY_TYPE, "First param must be array.");
-        int varEndAdrs = getTopAdrs(code) + tmpSz - 1;
-        bool isArray;
-        int varAdrs = getMemAdrs(code, isArray);
-        if (isArray) errorExit(tecINVALID_TYPE, "Required an array object, not an element of the array.");
-        VarObj oo; oo.init(tmpTp);
+        auto symPt = symTablePt(code);             /* 변수 속성: 순서에 주의(getMemAdrs보다 먼저) */
+        if (symPt->symKind == varId) errorExit(tecINVALID_TYPE, "Need a variable of array");
+        int varAdrs = getMemAdrs(code, varSymType);
+        if (varSymType != varId) errorExit(tecINVALID_TYPE, "Required a variable of array");
+        VarObj oo; oo.init(symPt->dtTyp);
         code = chkNextCode(code, ',');
         oo = getExpression_syntax(0, 0);           /* type 확인 */
         code = chkNextCode(code, ',');
         oo = getExpression_syntax(0, 0);           /* type 확인 */
         ++varAdrs;                                 /* 첫번째 인수 +0, 두번째 인수 +1 */
         while (code.kind == ',') {                 /* ',' 라면 인수가 계속됨 */
-            if (++varAdrs > varEndAdrs) errorExit(tecEXCEED_ARRAY_LENGTH, "Exceed index of array");
+            //if (++varAdrs > varEndAdrs) errorExit(tecEXCEED_ARRAY_LENGTH, "Exceed index of array");
             code = nextCode();
             oo = getExpression_syntax(0, 0);       /* type 확인 */
         } 

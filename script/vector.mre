@@ -1,5 +1,5 @@
 // vector<T>: push(T), pop, insert(idx, T), erase(idx), clear, reserve(buffer_size), resize(new_size)
-// arrayList<T>: add(T), insert(idx, T), remove(idx), indexOf(T, start_idx=start, end_idx=end), clear, reverse, sort(compare?)
+// arrayList<T>: add(T), insert(idx, T), remove(idx), indexOf(T, start_idx=start, search_length=end), clear, reverse, sort(compare?)
 
 vector<int> ivec
 int kk = 4
@@ -13,9 +13,10 @@ func void pushStr(string aa)
     mm = aa
 
     log("----", svec.size(), "----")
-    string ss
-    foreach( ss : svec) {
-        log(ss)
+
+    int cnt
+    for(cnt=0; cnt<svec.size(); ++cnt) {
+        log(svec[cnt])
     }
 }
 
@@ -39,9 +40,9 @@ func void popInt()
     ivec.pop()
 
     log("----", ivec.size(), "----")
-    int ii
-    foreach(ii : ivec) {
-        log(ii)
+    int ik
+    foreach(ik : ivec) {
+        log(ik)
     }
 }
 
