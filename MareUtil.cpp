@@ -33,8 +33,11 @@ MareUtil::initSubCmdList()
     // ----- Set Property -----
     itemlist_.insert(make_pair("resize", Resize));
 
-    itemlist_.insert(make_pair("push", Push));
-    itemlist_.insert(make_pair("pop", Pop));
+    itemlist_.insert(make_pair("add", Add));
+    itemlist_.insert(make_pair("remove", Remove));
+    itemlist_.insert(make_pair("insert", Insert));
+    itemlist_.insert(make_pair("reserve", Reserve));
+    itemlist_.insert(make_pair("clear", Clear));
 
     return itemlist_;
 }
@@ -64,7 +67,7 @@ MareUtil::getIdx(TknKind const& tk, string const& itemName)
                 if (k >= Size && k <= IndexOf) return k;
                 break;
             case SetProperty:
-                if (k >= Resize && k <= Pop) return k;
+                if (k >= Resize && k <= Clear) return k;
                 break;
             case Math:
                 if (k >= Ceil && k <= Round) return k;
@@ -88,8 +91,11 @@ MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
                 tk = GetProperty;
                 return k;
             case Resize:
-            case Push:
-            case Pop:
+            case Add:
+            //case Insert:
+            case Remove:
+            //case Reserve:
+            //case Clear:
                 tk = SetProperty;
                 return k;
         }

@@ -465,7 +465,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
                 isUpdatedSymbols = true;
             }
         }
-        else if (code.symIdx == Push) {
+        else if (code.symIdx == Add) {
             code = nextCode();
             VarObj vo = getExpression('(', ')');
             // 타입 검사 필요함.
@@ -482,15 +482,19 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
             DynamicMem.set(varAdrs + osz, vo);
             isUpdatedSymbols = true;
         }
-        else if (code.symIdx == Pop) {
+        else if (code.symIdx == Remove) {
             code = nextCode();
+            int idx = getExpression('(', ')').getDbl();
             int osz = symTablePt(save)->aryLen;
             if (osz == 0 || osz == NOT_DEFINED_ARRAY)
-                errorExit(tecEXCEED_ARRAY_LENGTH);
+                errorExit(tecEXCEED_ARRAY_LENGTH, symTablePt(save)->name, " has no item.");
+            if (osz <= idx) errorExit(tecEXCEED_ARRAY_LENGTH);
             --osz;
             symTablePt(save)->aryLen = osz;
-            VarObj vo;
-            DynamicMem.set(varAdrs + osz, vo);
+            int bsz = symTablePt(save)->args;
+            bsz += symTablePt(save)->adrs;
+            bsz--;
+            DynamicMem.updateRemove(idx, 1, bsz);
             isUpdatedSymbols = true;
         }
         else throw tecINCORRECT_SYNTAX;

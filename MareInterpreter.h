@@ -56,7 +56,7 @@ private:
     void chkVarName(Token const& tk);
     void setSymName(short const dtType);
     void setSymAryLen();
-    void vectorDeclare();
+    void arrayListDeclare();
     void funcDeclare();
     void backPatch(short line, short endLine);
 

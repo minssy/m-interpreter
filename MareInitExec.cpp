@@ -264,25 +264,27 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
     if (code.kind != SetProperty)
         errorExit(tecINCORRECT_SYNTAX, "set property only");
  
+    if (varCode.kind != Gvar) 
+        errorExit(tecINCORRECT_SYNTAX, "global variable only");
+        
     if (code.symIdx == Resize) {
-        if (varCode.kind != Gvar) errorExit(tecINCORRECT_SYNTAX, "global variable only");
         if (sk != arrayId) errorExit(tecINCORRECT_SYNTAX, "array only");
         code = nextCode();
         double nsz = getExpression_syntax('(', ')').getDbl();
         if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
         if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
     }
-    else if (code.symIdx == Push) {
-        if (sk != vectorId) errorExit(tecINCORRECT_SYNTAX, "vector only");
+    else if (code.symIdx == Add) {
+        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
         code = nextCode();
         returnValue.init(symTablePt(varCode)->dtTyp);
         returnValue = getExpression_syntax('(', ')');
     }
-    else if (code.symIdx == Pop) {
-        if (sk != vectorId) errorExit(tecINCORRECT_SYNTAX, "vector only");
+    else if (code.symIdx == Remove) {
+        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
         code = nextCode();
-        code = chkNextCode(code, '(');
-        code = chkNextCode(code, ')');
+        returnValue.init(INT_T);
+        returnValue = getExpression_syntax('(', ')');
     }
     else errorExit(tecINCORRECT_SYNTAX);
 }

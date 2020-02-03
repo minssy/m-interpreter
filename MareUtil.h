@@ -49,13 +49,13 @@ enum VariableGetAPI {
 
 enum VariableSetAPI {
 
-    /* vector */
+    /* array */
     Resize = 61,
+    /* arrayList */
     Reserve,
-    Push,
-    Pop,
+    Add,
     Insert,
-    Erase,
+    Remove,
     Clear,
 
 };
