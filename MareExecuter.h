@@ -68,7 +68,7 @@ private:
 
     short setParams(vector<VarObj>& vs, short numOfParams);
     
-    void updateArraySize();
+    void setPropertyRun(CodeSet const& varCode, SymKind sk);
     void updateSymTbl(int adrs, int diff, bool isFixedArray=false);   
 };
 

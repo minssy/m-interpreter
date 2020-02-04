@@ -33,11 +33,7 @@ func void addInt(int val, int sz=1)
     }
     kk = val
 
-    log("----", ivec.size(), "----")
-    int ii
-    foreach(ii : ivec) {
-        log(ii)
-    }
+    viewInt()
 }
 
 // idx가 -1이면, 마지막 인덱스
@@ -59,12 +55,7 @@ func void insertInt(int val, int idx=-1, int sz=1)
         ivec.insert(val, idx, sz)
     }
 
-    log("----", ivec.size(), "----")
-    int cnt = 0
-    int ik
-    foreach(ik : ivec) {
-        log(cnt++, " : ", ik)
-    }
+    viewInt()
 }
 
 // idx가 -1이면, 마지막 인덱스
@@ -83,11 +74,7 @@ func void removeInt(int idx=-1, int size=1)
         ivec.remove(idx, size)
     }
 
-    log("----", ivec.size(), "----")
-    int ik
-    foreach(ik : ivec) {
-        log(ik)
-    }
+    viewInt()
 }
 
 func void clearInt()
@@ -97,12 +84,21 @@ func void clearInt()
     kk = ivec.size()
     ivec.clear()
 
-    log("----", ivec.size(), "----")
-// ivec 데이터가 없으므로 에러
-//    int ik
-//    foreach(ik : ivec) {
-//        log(ik)
-//    }
+    require (viewInt() == 0)
+}
+
+func int viewInt() 
+{
+    int sz = ivec.size()
+    log("----", sz, "----")
+    if (sz > 0) {
+        int cnt = 0
+        int ik
+        foreach(ik : ivec) {
+            log(cnt++, " : ", ik)
+        }
+    }
+    return sz
 }
 
 ivec.add(7)
