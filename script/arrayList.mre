@@ -1,0 +1,105 @@
+// vector<T>: push(T), pop, insert(idx, T), erase(idx), clear, reserve(buffer_size), resize(new_size)
+// arrayList<T>: add(T), insert(idx, T), remove(idx), indexOf(T, start_idx=start, search_length=end), clear, reverse, sort(compare?)
+
+arrayList<int> ivec
+int kk = 4
+arrayList<string> svec
+string mm
+
+func void addStr(string aa) 
+{
+    log("----", svec.size(), "----")
+    svec.add(aa)
+    mm = aa
+
+    log("----", svec.size(), "----")
+
+    int cnt
+    for(cnt=0; cnt<svec.size(); ++cnt) {
+        log(svec[cnt])
+    }
+}
+
+func void addInt(int val, int sz=1)
+{
+    log("----", ivec.size(), "----")
+
+    log("----", "add length:", sz , "----")
+    if (sz == 1) {
+        ivec.add(val)
+    }
+    else {
+        ivec.add(val, sz)
+    }
+    kk = val
+
+    viewInt()
+}
+
+// idx가 -1이면, 마지막 인덱스
+func void insertInt(int val, int idx=-1, int sz=1)
+{
+    log("----", ivec.size(), "----")
+    
+    if (idx == -1) {
+        idx = ivec.size() - 1
+    }
+    
+    log("----", "insert idx:", idx, ", length:", sz , "----")
+
+    kk = ivec[idx]
+    if (sz == 1) {
+        ivec.insert(val, idx)
+    }
+    else {
+        ivec.insert(val, idx, sz)
+    }
+
+    viewInt()
+}
+
+// idx가 -1이면, 마지막 인덱스
+func void removeInt(int idx=-1, int size=1)
+{
+    log("----", ivec.size(), "----")
+    if (idx == -1) {
+        idx = ivec.size() - 1
+    }
+    log("----", "remove idx:", idx, ", length:", size , "----")
+    kk = ivec[idx]
+    if (size == 1) {
+        ivec.remove(idx)
+    }
+    else {
+        ivec.remove(idx, size)
+    }
+
+    viewInt()
+}
+
+func void clearInt()
+{
+    log("----", ivec.size(), "----")
+
+    kk = ivec.size()
+    ivec.clear()
+
+    require (viewInt() == 0)
+}
+
+func int viewInt() 
+{
+    int sz = ivec.size()
+    log("----", sz, "----")
+    if (sz > 0) {
+        int cnt = 0
+        int ik
+        foreach(ik : ivec) {
+            log(cnt++, " : ", ik)
+        }
+    }
+    return sz
+}
+
+ivec.add(7)
+

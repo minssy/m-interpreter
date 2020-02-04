@@ -164,8 +164,8 @@ MareInterpreter::convert()
     case VarDateTime:
         varDeclare(token.kind);          /* 변수 선언 처리 */
         break;
-    case Vector:
-        vectorDeclare();
+    case ArrayList:
+        arrayListDeclare();
         break;
     case Func:
         chkDo = true;                    /* 블록 시작 체크를 위한 플래그 설정 */
@@ -422,7 +422,7 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             setCode(tp, mutil.getIdx(tp, token.text));
             break;
         }
-        case True:  case False:
+        case True:  case False:  case Minus:
             setCode(token.kind);
             break;
         default:                                                   /* '+', '-', '<=' 등 처리 */
@@ -593,20 +593,20 @@ MareInterpreter::setSymAryLen()
 }
 
 void 
-MareInterpreter::vectorDeclare()
+MareInterpreter::arrayListDeclare()
 {
-    JLOG(mutil.j_.trace()) << "*** vector declear ***";
+    JLOG(mutil.j_.trace()) << "*** arrayList declear ***";
     token = nextTkn();
     token = chkNextTkn(token, Less);
     TknKind varType = token.kind;
     token = nextTkn();
     token = chkNextTkn(token, Great);
-    JLOG(mutil.j_.trace()) << " * new vector type:" << kind2Str((TknKind)varType) << " " << token.text;
+    JLOG(mutil.j_.trace()) << " * new arrayList type:" << kind2Str((TknKind)varType) << " " << token.text;
     chkVarName(token);                     /* 이름 검사 */
     setSymName(varType);                   /* 변수 등록에 사용될 SymTbl 셋팅 */
     //setSymAryLen();                        /* 길이 정보 설정 */
     tmpTb.aryLen = NOT_DEFINED_ARRAY;      /* 초기 배열 크기: 65535(== 0) */
-    tmpTb.symKind = vectorId;
+    tmpTb.symKind = arrListId;
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
 
     setCodeEofLine();
@@ -917,7 +917,7 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     mem_size = tb.aryLen;
     if (mem_size == 0) mem_size = 1;                           /* 단순 변수일 때 처리 */
     else if (mem_size == NOT_DEFINED_ARRAY) { 
-        mem_size = MEMORY_BACK_RESIZE;                         /* vector 셋팅 */
+        mem_size = MEMORY_BACK_RESIZE;                         /* arrayList 셋팅 */
         tb.args = MEMORY_BACK_RESIZE;
     }
     else {

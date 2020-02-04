@@ -54,7 +54,6 @@ enum TknKind {
   VarInt, 
   VarStr, 
   VarDateTime, 
-  Vector,
   ArrayList,
 
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
@@ -143,7 +142,7 @@ enum SymKind {
     paraId,
     /* symbol 등록중, varId, paraId로 부터 변경 */
     arrayId,
-    vectorId,
+    arrListId,
 };
 
 /** 심볼 테이블 구성 */
@@ -173,7 +172,7 @@ struct SymTbl
             else if (symKind == varId) { str.append("Variable "); }
             else if (symKind == paraId) { str.append("Param "); }
             else if (symKind == arrayId) { str.append("Array "); }
-            else if (symKind == vectorId) { str.append("Vector "); }
+            else if (symKind == arrListId) { str.append("ArrayList "); }
             else if (symKind == noId) { str.append("none-symbol "); }
             else { str.append("Wrong-symble-type:").append(std::to_string((int)symKind)); return str; }
 
