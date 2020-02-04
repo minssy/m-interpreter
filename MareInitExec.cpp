@@ -278,13 +278,37 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
         if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
         code = nextCode();
         returnValue.init(symTablePt(varCode)->dtTyp);
-        returnValue = getExpression_syntax('(', ')');
+        returnValue = getExpression_syntax('(', 0);
+        if (code.kind == ',') {
+            getExpression_syntax(',', 0).getDbl();
+        }
+        code = chkNextCode(code, ')');
+    }
+    else if (code.symIdx == Insert) {
+        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+        code = nextCode();
+        returnValue.init(symTablePt(varCode)->dtTyp);
+        returnValue = getExpression_syntax('(', ',');
+        getExpression_syntax(0, 0).getDbl();
+        if (code.kind == ',') {
+            getExpression_syntax(',', 0).getDbl();
+        }
+        code = chkNextCode(code, ')');
     }
     else if (code.symIdx == Remove) {
         if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
         code = nextCode();
-        returnValue.init(INT_T);
-        returnValue = getExpression_syntax('(', ')');
+        getExpression_syntax('(', 0).getDbl();
+        if (code.kind == ',') {
+            getExpression_syntax(',', 0).getDbl();
+        }
+        code = chkNextCode(code, ')');
+    }
+    else if (code.symIdx == Clear) {
+        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+        code = nextCode();
+        code = chkNextCode(code, '(');
+        code = chkNextCode(code, ')');
     }
     else errorExit(tecINCORRECT_SYNTAX);
 }

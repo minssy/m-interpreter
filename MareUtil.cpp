@@ -36,7 +36,6 @@ MareUtil::initSubCmdList()
     itemlist_.insert(make_pair("add", Add));
     itemlist_.insert(make_pair("remove", Remove));
     itemlist_.insert(make_pair("insert", Insert));
-    itemlist_.insert(make_pair("reserve", Reserve));
     itemlist_.insert(make_pair("clear", Clear));
 
     return itemlist_;
@@ -92,10 +91,9 @@ MareUtil::getPropertyIdx(string const& itemName, TknKind& tk)
                 return k;
             case Resize:
             case Add:
-            //case Insert:
+            case Insert:
             case Remove:
-            //case Reserve:
-            //case Clear:
+            case Clear:
                 tk = SetProperty;
                 return k;
         }

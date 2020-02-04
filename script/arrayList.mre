@@ -20,11 +20,18 @@ func void addStr(string aa)
     }
 }
 
-func void addInt(int j)
+func void addInt(int val, int sz=1)
 {
     log("----", ivec.size(), "----")
-    ivec.add(j)
-    kk = j
+
+    log("----", lth:", sz , "----")
+    if (sz == 1) {
+        ivec.add(val)
+    }
+    else {
+        ivec.add(val, sz)
+    }
+    kk = val
 
     log("----", ivec.size(), "----")
     int ii
@@ -33,14 +40,61 @@ func void addInt(int j)
     }
 }
 
-func void removeInt(int idx=-1)
+// idx가 -1이면, 마지막 인덱스
+func void insertInt(int val, int idx=-1, int sz=1)
+{
+    log("----", ivec.size(), "----")
+    
+    if (idx == -1) {
+        idx = ivec.size() - 1
+    }
+    
+    log("----", "idx:", idx, ", lth:", sz , "----")
+
+    kk = ivec[idx]
+    if (sz == 1) {
+        ivec.insert(val, idx)
+    }
+    else {
+        ivec.insert(val, idx, sz)
+    }
+
+    log("----", ivec.size(), "----")
+    int ik
+    foreach(ik : ivec) {
+        log(ik)
+    }
+}
+
+// idx가 -1이면, 마지막 인덱스
+func void removeInt(int idx=-1, int size=1)
 {
     log("----", ivec.size(), "----")
     if (idx == -1) {
-        kk = ivec.size() - 1
+        idx = ivec.size() - 1
     }
+    log("----", "idx:", idx, ", lth:", size , "----")
     kk = ivec[idx]
-    ivec.remove(idx)
+    if (size == 1) {
+        ivec.remove(idx)
+    }
+    else {
+        ivec.remove(idx, size)
+    }
+
+    log("----", ivec.size(), "----")
+    int ik
+    foreach(ik : ivec) {
+        log(ik)
+    }
+}
+
+func void clearInt()
+{
+    log("----", ivec.size(), "----")
+
+    kk = ivec.size()
+    ivec.clear()
 
     log("----", ivec.size(), "----")
     int ik

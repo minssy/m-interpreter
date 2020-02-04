@@ -52,7 +52,6 @@ enum VariableSetAPI {
     /* array */
     Resize = 61,
     /* arrayList */
-    Reserve,
     Add,
     Insert,
     Remove,
