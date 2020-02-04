@@ -123,13 +123,19 @@ public:
         if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         if (subSize < 1) throw tecNEED_UNSIGNED_INTEGER;
         vector<VarObj>::iterator it = mem.begin();
+        cout << endl << " -updateInsert " << adrs << " " << subSize << " " << lastArrayIdx;
         lastArrayIdx -= subSize;
         int k=0;
-        for (k=lastArrayIdx; k<=adrs; k--) {
+        for (k=lastArrayIdx; k>=adrs; k--) {
+            cout << endl << " -updateInsert -idx:" << (k+subSize);
             mem[k+subSize].init(NON_T);
-            mem[k+subSize] = mem[k];
+            if (mem[k].getType() != NON_T){
+                mem[k+subSize] = mem[k];
+                cout << " -> " << mem[k+subSize].toFullString(true);
+            }
         }
-        for (int j=0; j<subSize; j++) {
+        for (int j=1; j<=subSize; j++) {
+            cout << endl << " -InsertVar -idx:" << (k+j);
             mem[k+j].init(NON_T);
             mem[k+j] = dt;
         }

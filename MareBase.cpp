@@ -321,10 +321,12 @@ MareBase::errorExit(int err, string a, string b) {
     if (b != "\1") { msg.append(" ").append(b);
     }}
     
-    JLOG(mutil.j_.trace()) << " [Exit by Contract Exception] " << transToken(err)
+    JLOG(mutil.j_.trace()) << " [Exit by Contract Exception] -line"
+                           << getLineNo() << " " << transToken(err)
                            << " -code: " << to_string(err) << " -message: " << msg;
     
     JLOG(mutil.j_.trace()) << printInfos();
+    JLOG(mutil.j_.trace()) << mutil.getLedgerLog();
 
     //throw err;
     if (Pc == -1) {

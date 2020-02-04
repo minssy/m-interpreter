@@ -202,8 +202,9 @@ MareExecuter::statement()
     if (Pc>maxCodeLine || exitFlag) return;                 /* 프로그램 종료 */
 
     code = save = firstCode(Pc);                            /* 현재 line의 시작 코드 */
+    cout << endl << " ???? " << (int)code.kind << " " << blkNest;
     if (code.kind != EofLine) initDbgCode(code);
-    else { initDbgCode(); ++Pc; return; }
+    else { cout << "a"; initDbgCode(); cout << "b"; ++Pc; return; }
     top_line = Pc; end_line = code.jmpAdrs;                 /* 코드 제어 범위의 시작과 끝 설정 */
 
     JLOG(mutil.j_.trace()) << " ===== Start statement ( Line No. "
@@ -509,6 +510,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
             int bsz = symTablePt(save)->args;
             if (osz == NOT_DEFINED_ARRAY) osz = 0;
             if ((osz + diffLength) >= bsz) {
+                cout << endl << " && insert expand &&";
                 short kk = osz + diffLength - bsz;
                 if (kk > MEMORY_BACK_RESIZE) {
                     kk = (kk / MEMORY_BACK_RESIZE) + 1;
@@ -520,7 +522,9 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
                 DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
                 bsz = symTablePt(save)->args;
             }
+            cout << endl << " && insert1 && " << varAdrs << " " << osz;
             symTablePt(save)->aryLen = osz + diffLength;
+            cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
             DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
             isUpdatedSymbols = true;
         }
@@ -556,6 +560,7 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
                     // memory update
                     DynamicMem.updateShrink(varAdrs + bsz - diffLength, diffLength);
                 }
+                symTablePt(save)->aryLen = 0;
                 VarObj vo;
                 for (short idx=0; idx<MEMORY_BACK_RESIZE; idx++)
                     DynamicMem.set(varAdrs + idx, vo);
@@ -637,11 +642,14 @@ MareExecuter::block()
 {
     blkNest++; 
     TknKind k;
+    cout << endl << " * * * block start";
     while (!breakFlag && !conFlag && !returnFlag && !exitFlag) { /* break, return 등으로 인한 종료 플래그 확인 */
+        cout << endl << " * * * block in -line:" << Pc;
         k = lookCode(Pc);                               /* 다음 line의 시작 코드 확인 */
         if (k==End || k==Else || k==Elif) break;        /* 다음 line이 블록의 정상 종료 조건인지 확인 */
-        statement();        
+        statement();
     }
+    cout << endl << " * * * block end -line:" << Pc;
     blkNest--; 
 }
 
@@ -957,12 +965,13 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
     DynamicMem.autoResize(stpReg);                         /* 메모리 유효 영역 확보 */
     returnValue.init(Gtable[fncIdx].dtTyp);                /* 함수 반환 값의 기본값 설정 (void도 가능) */
 
-    JLOG(mutil.j_.trace()) << " * execFunction: Pc:" << Pc;
+    JLOG(mutil.j_.trace()) << " * execFunction -Pc:" << Pc << ", -block Level:" << blkNest;
     JLOG(mutil.j_.trace()) << " ** Func variable memory range: " << baseReg << " ~ " << stpReg;
     code = firstCode(Pc);                                  /* func 시작 코드 획득 */
     short OffsetArgs = Gtable[fncIdx].args - argCnt;
 
     short save_blkNest = blkNest;
+    
     blkNest = dbgCode.size();
     addDbgCode(code);                                      /* func의 시작임 */
 
@@ -989,7 +998,14 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
                 else {
                     DynamicMem.set(varArgs, VarObj(tmpTp, oo));
                 }
-                if (code.kind == '=') {code = nextCode(); code = nextCode();}   /* 할당값이 있다면 skip */
+                if (code.kind == '=') { 
+                    while (true) {
+                        code = nextCode();   /* 할당값이 있다면 skip */
+                        if (code.kind == ')' || code.kind == ',') break;
+                        if (code.kind == EofLine) errorExit(tecINCORRECT_SYNTAX);
+                    } 
+
+                }
             }
             else {
                 JLOG(mutil.j_.trace()) << " ** param assign default value. -remain default args:" << (OffsetArgs - 1);
@@ -999,7 +1015,7 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
             if (code.kind != ',') break;                   /* ',' 이면 인수가 계속됨 */
         }
     }
-    removeDbgCode();
+    //removeDbgCode();
     code = nextCode();                                     /* ')' 건너뜀 */
     JLOG(mutil.j_.trace()) << " * execFunction body ";
     // 함수 본체 처리
@@ -1260,6 +1276,7 @@ MareExecuter::nextCode()
     short int jmpAdrs, tblIdx;
 
     if (*code_ptr == '\0') {                     /* 현재 line에서 코드가 끝난 경우 */
+        cout << endl << " ** EOF Line ** ";
         return CodeSet(EofLine);
     }
     kd = (TknKind)*UCHAR_P(code_ptr++);          /* 분석용 포인터를 다음 위치로 설정해서 코드 값을 읽음 */

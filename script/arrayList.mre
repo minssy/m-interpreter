@@ -24,7 +24,7 @@ func void addInt(int val, int sz=1)
 {
     log("----", ivec.size(), "----")
 
-    log("----", lth:", sz , "----")
+    log("----", "add length:", sz , "----")
     if (sz == 1) {
         ivec.add(val)
     }
@@ -49,7 +49,7 @@ func void insertInt(int val, int idx=-1, int sz=1)
         idx = ivec.size() - 1
     }
     
-    log("----", "idx:", idx, ", lth:", sz , "----")
+    log("----", "insert idx:", idx, ", length:", sz , "----")
 
     kk = ivec[idx]
     if (sz == 1) {
@@ -60,9 +60,10 @@ func void insertInt(int val, int idx=-1, int sz=1)
     }
 
     log("----", ivec.size(), "----")
+    int cnt = 0
     int ik
     foreach(ik : ivec) {
-        log(ik)
+        log(cnt++, " : ", ik)
     }
 }
 
@@ -73,7 +74,7 @@ func void removeInt(int idx=-1, int size=1)
     if (idx == -1) {
         idx = ivec.size() - 1
     }
-    log("----", "idx:", idx, ", lth:", size , "----")
+    log("----", "remove idx:", idx, ", length:", size , "----")
     kk = ivec[idx]
     if (size == 1) {
         ivec.remove(idx)
@@ -97,10 +98,11 @@ func void clearInt()
     ivec.clear()
 
     log("----", ivec.size(), "----")
-    int ik
-    foreach(ik : ivec) {
-        log(ik)
-    }
+// ivec 데이터가 없으므로 에러
+//    int ik
+//    foreach(ik : ivec) {
+//        log(ik)
+//    }
 }
 
 ivec.add(7)
