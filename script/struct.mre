@@ -1,0 +1,48 @@
+
+1. struct를 symtbl에 등록
+2. struct의 item을 struct_items vector에 등록
+3. symtbl에서 struct의 frame 값을 갱신 -> struct의 item 수
+
+struct_items vector
+item_id symtbl_id item_name item_type item_default_value
+
+struct pointSet 
+{
+    int x
+    int y
+    int z
+}
+
+struct point2Set 
+{
+    int x = 10
+    int y = 20
+}
+
+pointSet pt1
+
+pt1.x = 1
+pt1.y = 2
+pt1.z = 3
+
+point2Set pt2
+
+pointSet pts[3]
+
+pts[0].x = 4
+pts[0].y = 5
+pts[0].z = 6
+
+pts[1] = pt1
+
+pts[3].x = pt2.x
+pts[3].y = pt2.y
+pts[3].z = 30
+
+pointSet pt3 = pts[0]
+
+arrayList<pointSet> ptlist
+
+ptlist.add(pt1)
+
+

@@ -572,6 +572,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
                 DynamicMem.set(varAdrs + idx, vo);
             isUpdatedSymbols = true;
         }
+        break;
     }
     default: 
         throw tecINCORRECT_SYNTAX;
@@ -591,139 +592,6 @@ MareExecuter::assignVariable(CodeSet const save, bool declare)
     
     if (code.kind == '.') {                            /* setProperty 처리 */
         return setPropertyRun(save, varSymType);
-
-        // code = nextCode();
-        // addDbgCode(code);
-        // int diffLength = 1;
-        // if (code.symIdx == Resize) {
-        //     code = nextCode();
-        //     double nsz = getExpression('(', ')').getDbl();/* 변경될 크기 값 */
-        //     if (nsz < 1 || nsz != (int)nsz) errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
-        //     int osz = symTablePt(save)->aryLen;
-        //     diffLength = nsz - osz;
-        //     if (diffLength != 0) {
-        //         if (diffLength > 0) { // insert
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, diffLength, true);
-        //             VarObj objTmp;
-        //             objTmp.init(symTablePt(save)->dtTyp);
-        //             // memory update
-        //             DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
-        //         }
-        //         else { // erase
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, diffLength, true);
-        //             // memory update
-        //             diffLength *= -1;
-        //             DynamicMem.updateShrink(varAdrs + osz - diffLength, diffLength);
-        //         }
-        //         isUpdatedSymbols = true;
-        //     }
-        // }
-        // else if (code.symIdx == Add) {
-        //     code = nextCode();
-        //     VarObj vo = getExpression('(', 0);
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     // 타입 검사 필요함.
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == NOT_DEFINED_ARRAY) osz = 0;
-        //     if ((osz + diffLength) >= bsz) {
-        //         short kk = osz + diffLength - bsz;
-        //         if (kk > MEMORY_BACK_RESIZE) {
-        //             kk = (kk / MEMORY_BACK_RESIZE) + 1;
-        //         }
-        //         else kk = 1;
-        //         updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
-        //         VarObj objTmp;
-        //         objTmp.init(symTablePt(save)->dtTyp);
-        //         DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-        //     }
-        //     symTablePt(save)->aryLen = osz + diffLength;
-        //     for (short idx=0; idx<diffLength; idx++)
-        //         DynamicMem.set(varAdrs + osz + idx, vo);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Insert) {
-        //     code = nextCode();
-        //     VarObj vo = getExpression('(', 0);
-        //     int idx = getExpression(',', 0).getDbl();
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == NOT_DEFINED_ARRAY) osz = 0;
-        //     if ((osz + diffLength) >= bsz) {
-        //         cout << endl << " && insert expand &&";
-        //         short kk = osz + diffLength - bsz;
-        //         if (kk > MEMORY_BACK_RESIZE) {
-        //             kk = (kk / MEMORY_BACK_RESIZE) + 1;
-        //         }
-        //         else kk = 1;
-        //         updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
-        //         VarObj objTmp;
-        //         objTmp.init(symTablePt(save)->dtTyp);
-        //         DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-        //         bsz = symTablePt(save)->args;
-        //     }
-        //     cout << endl << " && insert1 && " << varAdrs << " " << osz;
-        //     symTablePt(save)->aryLen = osz + diffLength;
-        //     cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
-        //     DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Remove) {
-        //     code = nextCode();
-        //     int idx = getExpression('(', 0).getDbl();
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == 0 || osz == NOT_DEFINED_ARRAY)
-        //         errorExit(tecEXCEED_ARRAY_LENGTH, symTablePt(save)->name, " has no item.");
-        //     if ((idx+diffLength) > osz) errorExit(tecEXCEED_ARRAY_LENGTH);
-        //     symTablePt(save)->aryLen = osz - diffLength;
-        //     DynamicMem.updateRemove(varAdrs + idx, diffLength, varAdrs + bsz - 1);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Clear) {
-        //     code = nextCode();
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz != 0 && osz != NOT_DEFINED_ARRAY)
-        //     {
-        //         diffLength = bsz - MEMORY_BACK_RESIZE;
-        //         if (diffLength > 0) {
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, (diffLength * -1), false);
-        //             // memory update
-        //             DynamicMem.updateShrink(varAdrs + bsz - diffLength, diffLength);
-        //         }
-        //         symTablePt(save)->aryLen = 0;
-        //         VarObj vo;
-        //         for (short idx=0; idx<MEMORY_BACK_RESIZE; idx++)
-        //             DynamicMem.set(varAdrs + idx, vo);
-        //         isUpdatedSymbols = true;
-        //     }
-        // }
-        // else throw tecINCORRECT_SYNTAX;
-        // removeDbgCode(); removeDbgCode(); 
-        // return;
     }
 
     if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
@@ -1119,7 +987,6 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
     short OffsetArgs = Gtable[fncIdx].args - argCnt;
 
     short save_blkNest = blkNest;
-    
     blkNest = dbgCode.size();
     addDbgCode(code);                                      /* func의 시작임 */
 

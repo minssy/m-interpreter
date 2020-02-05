@@ -62,6 +62,7 @@ MareBase::initKindMap() {
     tmpKinds.insert(make_pair("datetime", VarDateTime));
 
     tmpKinds.insert(make_pair("arrayList", ArrayList));
+    tmpKinds.insert(make_pair("struct", Struct));
 
     tmpKinds.insert(make_pair("func", Func));      tmpKinds.insert(make_pair("function", Func));
 
@@ -123,6 +124,7 @@ MareBase::initKindDBGMap() {
     kindDBG.insert(make_pair(Ident, "Ident"));
     kindDBG.insert(make_pair(GetProperty, "GetProperty"));
     kindDBG.insert(make_pair(SetProperty, "SetProperty"));
+    kindDBG.insert(make_pair(StructItem, "StructItem"));
 
     kindDBG.insert(make_pair(Expression, "Expression"));
     kindDBG.insert(make_pair(Version, "Version"));
@@ -154,6 +156,7 @@ MareBase::initKindNUMMap() {
     kindMapNum.insert(make_pair(System, 2));
     kindMapNum.insert(make_pair(GetProperty, 2));
     kindMapNum.insert(make_pair(SetProperty, 2));
+    kindMapNum.insert(make_pair(StructItem, 2));
     kindMapNum.insert(make_pair(Math, 2));
     kindMapNum.insert(make_pair(Throws, 2));
     
@@ -321,7 +324,7 @@ MareBase::errorExit(int err, string a, string b) {
     if (b != "\1") { msg.append(" ").append(b);
     }}
     
-    JLOG(mutil.j_.trace()) << " [Exit by Contract Exception] -line"
+    JLOG(mutil.j_.trace()) << " [Exit by Contract Exception] -line: "
                            << getLineNo() << " " << transToken(err)
                            << " -code: " << to_string(err) << " -message: " << msg;
     

@@ -167,6 +167,9 @@ MareInterpreter::convert()
     case ArrayList:
         arrayListDeclare();
         break;
+    case Struct:
+        structDeclare();
+        break;
     case Func:
         chkDo = true;                    /* 블록 시작 체크를 위한 플래그 설정 */
         funcDeclare();                   /* 함수 선언 처리 */
@@ -610,6 +613,14 @@ MareInterpreter::arrayListDeclare()
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
 
     setCodeEofLine();
+}
+
+void 
+MareInterpreter::structDeclare()
+{
+    JLOG(mutil.j_.trace()) << "*** struct declear ***";
+
+    
 }
 
 /** 함수 정의 */

@@ -90,6 +90,7 @@ enum TknKind {
   System,
   GetProperty,
   SetProperty,
+  StructItem, 
   /* 여기부터 고정 값 */
   Version=242,
   True=243,
@@ -144,6 +145,7 @@ enum SymKind {
     /* symbol 등록중, varId, paraId로 부터 변경 */
     arrayId,
     arrListId,
+    structId,
 };
 
 /** 심볼 테이블 구성 */
@@ -174,6 +176,7 @@ struct SymTbl
             else if (symKind == paraId) { str.append("Param "); }
             else if (symKind == arrayId) { str.append("Array "); }
             else if (symKind == arrListId) { str.append("ArrayList "); }
+            else if (symKind == structId) { str.append("Struct "); }
             else if (symKind == noId) { str.append("none-symbol "); }
             else { str.append("Wrong-symble-type:").append(std::to_string((int)symKind)); return str; }
 
@@ -192,11 +195,47 @@ struct SymTbl
         str.append(" ").append(std::to_string(adrs));
         str.append(" ").append(std::to_string(aryLen));
 
-        //if (!isHumanReadable && symKind == funcId) { // func에서만 필요
-            str.append(" ").append(std::to_string(args));
-            str.append(" ").append(std::to_string(frame));
-        //}
+        str.append(" ").append(std::to_string(args));
+        str.append(" ").append(std::to_string(frame));
+
         str.append(" ").append(name);
+        return str;
+    }
+};
+
+struct ItemTbl 
+{
+    unsigned short   symId;   /* struct의 symtbl id */
+    std::string      name;    /* Item의 이름 */
+    DtType           dtTyp;   /* 타입 (NON_T, DBL_T,...) 변수타입 */
+    VarObj           initVal; /* 초기값 */
+
+    ItemTbl() { clear(); }
+    void clear() {
+        name = ""; dtTyp=NON_T; 
+        symId=0; initVal.init(NON_T); 
+    }
+
+    std::string toFullString(bool isHumanReadable=false) {
+        std::string str("");
+        if (isHumanReadable) {
+            str.reserve(40);      // 메모리 확보
+
+            if (dtTyp == DBL_T) { str.append("double "); }
+            else if (dtTyp == INT_T) { str.append("int "); }
+            else if (dtTyp == STR_T) { str.append("string "); }
+            else if (dtTyp == DATETIME_T) { str.append("datetime "); }
+            else if (dtTyp == NON_T) { str.append("void(none) "); }
+            else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+        }
+        else {
+            str.reserve(25);      // 메모리 확보
+            str.append(std::to_string((unsigned short)dtTyp));
+        }
+        str.append(" ").append(std::to_string(symId));
+        str.append(" ").append(name);
+        str.append(" ").append(initVal.toFullString(isHumanReadable));
+
         return str;
     }
 };

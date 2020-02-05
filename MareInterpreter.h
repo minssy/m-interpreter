@@ -57,6 +57,7 @@ private:
     void setSymName(short const dtType);
     void setSymAryLen();
     void arrayListDeclare();
+    void structDeclare();
     void funcDeclare();
     void backPatch(short line, short endLine);
 
