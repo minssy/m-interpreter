@@ -208,12 +208,14 @@ struct ItemTbl
     unsigned short   symId;   /* struct의 symtbl id */
     std::string      name;    /* Item의 이름 */
     DtType           dtTyp;   /* 타입 (NON_T, DBL_T,...) 변수타입 */
-    VarObj           initVal; /* 초기값 */
+    DtType           initTyp;
+    double           initVal; /* 초기값 */
+    std::string      initStr; /* 초기값 */
 
     ItemTbl() { clear(); }
     void clear() {
-        name = ""; dtTyp=NON_T; 
-        symId=0; initVal.init(NON_T); 
+        name = ""; symId=0; dtTyp=NON_T; 
+        initTyp=NON_T; initVal=0; initStr=""; 
     }
 
     std::string toFullString(bool isHumanReadable=false) {
@@ -233,8 +235,16 @@ struct ItemTbl
             str.append(std::to_string((unsigned short)dtTyp));
         }
         str.append(" ").append(std::to_string(symId));
-        str.append(" ").append(name);
-        str.append(" ").append(initVal.toFullString(isHumanReadable));
+        str.append(" ").append(name).append(" ");
+        str.append(" ").append(std::to_string(initTyp));
+        if (initTyp == NON_T) return str;
+        if (initTyp == STR_T)
+            str.append(" ").append(initStr);
+        else {
+            //string str = to_string_with_precision(initVal);
+            //to_string_simple(str);
+            str.append(" ").append(std::to_string(initVal));
+        }
 
         return str;
     }

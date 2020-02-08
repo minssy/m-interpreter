@@ -83,7 +83,6 @@ MareInterpreter::convertAll(vector<string> &src)
                 token = nextTkn();                /* return type */
                 token = nextTkn();                /* func name */
                 setSymName(Void);                 /* 임시값으로 저장 */
-                   
                 enter(tmpTb, funcId);             /* 함수 인 경우 */
 
                 srcNew.push_back(srcWork[srcLineNo-1]);
@@ -100,7 +99,6 @@ MareInterpreter::convertAll(vector<string> &src)
                 break;
             case For:     /* for문의 초기값, 검증, 증감조건 순서를 실행시 유리하도록 변경 */
                 {
-
                 strInfo = srcWork[srcLineNo-1];
                 size_t idx1 = strInfo.find_first_of(';');
                 if (idx1 == string::npos) errorExit(tecINCORRECT_SYNTAX, "wrong for statement (semicolon not found)");
@@ -124,7 +122,7 @@ MareInterpreter::convertAll(vector<string> &src)
 
     } // while
 
-    printInfos(); // 디버깅용 
+    printInfos(false); // 디버깅용 
 
     if (funcInfos.size() == 0) {
         JLOG(mutil.j_.warn()) << "호출 가능한 함수가 없습니다.";
@@ -267,6 +265,7 @@ MareInterpreter::chkKinds(Token const& tk) {
     switch (tk.kind) {
         case VarInt:     case VarDbl:    case VarStr:
         case VarDateTime:
+        case ArrayList:  case Struct:
 
         case Func:       case End:
         case If:         case Elif:      case Else: 
@@ -371,8 +370,7 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             if (bracketLevel == 0) inBracket = false;
             if (bracketLevel < 0) errorExit(tecINCORRECT_BLACKET);
         }
-        else 
-            chkKinds(token);
+        else chkKinds(token);
 
         switch (token.kind) {
 
@@ -619,8 +617,59 @@ void
 MareInterpreter::structDeclare()
 {
     JLOG(mutil.j_.trace()) << "*** struct declear ***";
+    if (blkNest > 0 || funcDeclFlag) 
+        errorExit(tecINCORRECT_SYNTAX, "Struct declaration location is invalid.");
 
-    
+    token = nextTkn();
+    chkVarName(token);                     /* 이름 검사 */
+    setSymName(Void);                      /* 변수 등록에 사용될 SymTbl 셋팅 */
+    setSymAryLen();                        /* 길이 정보 설정 */
+    if (tmpTb.aryLen > 0) errorExit(tecINCORRECT_SYNTAX);
+
+    setCodeEofLine(true);
+    //if (token.kind == EofLine) token = nextLineTkn();
+    if (token.kind == Do) { 
+        pushInternalCode();
+        token = nextLineTkn();
+    }
+    int expected_adrs = Gtable.size();
+    short itemCnt = 0;
+    while (token.kind != Close) {
+        itemCnt++;
+        iTb.clear();
+        iTb.symId = expected_adrs;
+        iTb.dtTyp = (DtType)token.kind;
+        token = nextTkn();
+        if (token.kind != Ident) 
+            errorExit(tecINVALID_NAME, "Duplicated identifier: ", token.text);
+        iTb.name = token.text;
+        token = nextTkn();
+        
+        if (token.kind == '='){
+            token = nextTkn();
+            iTb.initTyp = iTb.dtTyp;
+            if (iTb.dtTyp == STR_T) { 
+                if (token.kind == String) iTb.initStr = token.text;
+                else errorExit(tecINVALID_ASSIGN, "Need string literal");
+            }
+            else { 
+                if (token.kind == IntNum || token.kind == DblNum)
+                    iTb.initVal = token.numVal;
+                else errorExit(tecINVALID_ASSIGN, "Need numeric literal");
+            }
+        }
+        setCodeEofLine();
+
+        Itable.push_back(iTb);
+    }
+    tmpTb.aryLen = itemCnt;
+    tmpTb.args = itemCnt;
+    tmpTb.symKind = structId;
+
+    short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
+
+    token = nextTkn();
+    setCodeEofLine();
 }
 
 /** 함수 정의 */
@@ -630,7 +679,7 @@ MareInterpreter::funcDeclare()
     int tblIdx, patch_line, fncTblIdx;
     
     if (blkNest > 0 || funcDeclFlag) 
-        errorExit(tecINCORRECT_SYNTAX, "Incorrect function declaration position.");
+        errorExit(tecINCORRECT_SYNTAX, "Function declaration location is invalid.");
 
     funcDeclFlag = true;                               /* 함수 처리 시작 확인 플래그 */
     localAdrs = 0;                                     /* 로컬 영역 할당 카운터 초기화 */

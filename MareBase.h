@@ -21,6 +21,7 @@ public:
         intenalCode.clear();
         Gtable.clear();
         Ltable.clear();
+        Itable.clear();
         nbrLITERAL.clear();
         strLITERAL.clear();
         dbgCode.clear();
@@ -50,12 +51,13 @@ public:
 protected: 
     MareUtil mutil;
 
-    vector<char*>  intenalCode;            /* 변환이 끝난, 내부 코드 저장 */
-    vector<SymTbl> Gtable;                 /* 전역 심볼 테이블 */
-    vector<SymTbl> Ltable;                 /* 로컬 심볼 테이블 */
-    MareMemory     DynamicMem;             /* 메모리 (변수 값 저장) */
-    vector<double> nbrLITERAL;             /* 수치 리터럴 저장 */
-    vector<string> strLITERAL;             /* 문자열 리터럴 저장 */
+    vector<char*>   intenalCode;           /* 변환이 끝난, 내부 코드 저장 */
+    vector<SymTbl>  Gtable;                /* Global Variable Symbol Table */
+    vector<SymTbl>  Ltable;                /* Local Variable Symbol Table */
+    vector<ItemTbl> Itable;                /* Struct Item Symbol Table */
+    MareMemory      DynamicMem;            /* 메모리 (변수 값 저장) */
+    vector<double>  nbrLITERAL;            /* 수치 리터럴 저장 */
+    vector<string>  strLITERAL;            /* 문자열 리터럴 저장 */
 
     Token token;                           /* 현재 처리중인 토큰 (interperter) */
     CodeSet code;                          /* 현재 코드 셋 (InitExec, Executer) */
@@ -68,7 +70,7 @@ protected:
     short blkNest;                         /* 블록의 깊이 정보 */
 
     char codeBuf[LINE_SIZE+1], *codeBuf_p; /* 내부 코드 생성 작업용 */
-       
+
     static map<string, TknKind> kindMap;   /* 소스 코드와 내부 코드의 키워드 맵 */
     static const TknKind ctyp[256];        /* 문자 종류표 배열 */ 
 

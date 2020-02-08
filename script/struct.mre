@@ -1,10 +1,10 @@
 
-1. struct를 symtbl에 등록
-2. struct의 item을 struct_items vector에 등록
-3. symtbl에서 struct의 frame 값을 갱신 -> struct의 item 수
+// 1. struct를 symtbl에 등록
+// 2. struct의 item을 struct_items vector에 등록
+// 3. symtbl에서 struct의 frame 값을 갱신 -> struct의 item 수
 
-struct_items vector
-item_id symtbl_id item_name item_type item_default_value
+// struct_items vector
+// item_id symtbl_id item_name item_type item_default_value
 
 struct pointSet 
 {

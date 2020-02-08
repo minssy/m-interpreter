@@ -405,6 +405,13 @@ MareBase::printInfos(bool all) {
         cout << endl << " " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
              << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame << "    :  " << tb.name;
     }
+    max =  Itable.size();
+    cout << endl << "  ************** Struct Items (" << max << ")************ "; 
+    for (i=0; i<max; i++){
+        ItemTbl tb = Itable[i];
+        cout << endl << " " << i << " : " << (int)tb.dtTyp << " " << (int)tb.symId << " " << tb.name;
+        if (tb.initTyp != NON_T) cout << " = " << tb.initVal << " or '" << tb.initStr << "'";
+    }
 
     cout << endl << DynamicMem.to_string();
 
