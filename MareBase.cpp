@@ -60,9 +60,9 @@ MareBase::initKindMap() {
     tmpKinds.insert(make_pair("int", VarInt));
     tmpKinds.insert(make_pair("string", VarStr));
     tmpKinds.insert(make_pair("datetime", VarDateTime));
+    tmpKinds.insert(make_pair("struct",   DeclareObj));
 
     tmpKinds.insert(make_pair("arrayList", ArrayList));
-    tmpKinds.insert(make_pair("struct", Struct));
 
     tmpKinds.insert(make_pair("func", Func));      tmpKinds.insert(make_pair("function", Func));
 
@@ -116,6 +116,7 @@ MareBase::initKindDBGMap() {
 
     kindDBG.insert(make_pair(DeclareVar, "declareVar"));
     kindDBG.insert(make_pair(DeclareArr, "declareArray"));
+    kindDBG.insert(make_pair(VarStruct, "object"));
 
     kindDBG.insert(make_pair(DBPlusR, "++"));
     kindDBG.insert(make_pair(DBMinusR, "--"));

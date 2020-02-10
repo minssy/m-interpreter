@@ -54,17 +54,18 @@ enum TknKind {
   VarInt, 
   VarStr, 
   VarDateTime, 
+  VarStruct,
   ArrayList,
-  Struct,
-
+  
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
   
   DblNum=21,      /* double type */
   IntNum,         /* int type */
   String,         /* string type */
 
-  DeclareVar=31,
+  DeclareVar=30,
   DeclareArr,
+  DeclareObj,
   Not='!',  DblQ='"', Mod='%', SglQ='\'', // 33, 34, 37, 39
   Lparen='(', Rparen=')',  // 40, 41
   Multi='*', Plus='+', Comma=',', Minus='-', Dot='.', Divi='/', // 42, 43, 44, 45, 46, 47
@@ -126,6 +127,7 @@ enum DtType {
     INT_T,
     STR_T,
     DATETIME_T,
+    OBJECT_T,
 };
 
 enum ExpressionType {
@@ -145,7 +147,7 @@ enum SymKind {
     /* symbol 등록중, varId, paraId로 부터 변경 */
     arrayId,
     arrListId,
-    structId,
+    objectId,
 };
 
 /** 심볼 테이블 구성 */
@@ -157,13 +159,13 @@ struct SymTbl
 
     unsigned short   adrs;    /* 변수/함수의 주소 */
     unsigned short   aryLen;  /* 배열길이, 0=단순변수 (func일 경우, 최소 인수개수) */
-    unsigned short   args;    /* 함수의 인수 개수 (vector의 버퍼 크기) */
-    unsigned short   frame;   /* 함수의 프래임 크기 */
+    unsigned short   args;    /* 함수의 인수 개수 (메모리 버퍼 크기) */
+    unsigned short   frame;   /* 함수의 프래임 크기 (struct item 갯수) */
 
     SymTbl() { clear(); }
     void clear() {
         name = ""; symKind=noId; dtTyp=NON_T; 
-        aryLen=0; args=0; adrs=0; frame=0; 
+        adrs=0; aryLen=0; args=0; frame=1; 
     }
 
     std::string toFullString(bool isHumanReadable=false) {
@@ -176,7 +178,7 @@ struct SymTbl
             else if (symKind == paraId) { str.append("Param "); }
             else if (symKind == arrayId) { str.append("Array "); }
             else if (symKind == arrListId) { str.append("ArrayList "); }
-            else if (symKind == structId) { str.append("Struct "); }
+            else if (symKind == objectId) { str.append("Struct "); }
             else if (symKind == noId) { str.append("none-symbol "); }
             else { str.append("Wrong-symble-type:").append(std::to_string((int)symKind)); return str; }
 
@@ -184,6 +186,7 @@ struct SymTbl
             else if (dtTyp == INT_T) { str.append("int "); }
             else if (dtTyp == STR_T) { str.append("string "); }
             else if (dtTyp == DATETIME_T) { str.append("datetime "); }
+            else if (dtTyp == OBJECT_T) { str.append("struct "); }
             else if (dtTyp == NON_T) { str.append("void(none) "); }
             else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
         }

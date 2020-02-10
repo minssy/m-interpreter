@@ -22,6 +22,7 @@ public:
         Gtable.clear();
         Ltable.clear();
         Itable.clear();
+        ObjectMap.clear();
         nbrLITERAL.clear();
         strLITERAL.clear();
         dbgCode.clear();
@@ -55,6 +56,7 @@ protected:
     vector<SymTbl>  Gtable;                /* Global Variable Symbol Table */
     vector<SymTbl>  Ltable;                /* Local Variable Symbol Table */
     vector<ItemTbl> Itable;                /* Struct Item Symbol Table */
+    map<string, int> ObjectMap;            /* Struct 키워드 맵 */
     MareMemory      DynamicMem;            /* 메모리 (변수 값 저장) */
     vector<double>  nbrLITERAL;            /* 수치 리터럴 저장 */
     vector<string>  strLITERAL;            /* 문자열 리터럴 저장 */

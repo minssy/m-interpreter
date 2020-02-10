@@ -59,6 +59,7 @@ private:
     void setSymAryLen();
     void arrayListDeclare();
     void structDeclare();
+    void objectDeclare();
     void funcDeclare();
     void backPatch(short line, short endLine);
 
