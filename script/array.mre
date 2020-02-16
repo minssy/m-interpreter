@@ -47,4 +47,6 @@ sCnt[7] = "aaa"
 
 log("array indexOf(2) : ", iCnt.indexOf(2))
 
+log("array length(2) : ", sCnt[7].length())
+
 log("Done.")

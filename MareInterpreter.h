@@ -49,6 +49,8 @@ private:
     void convert();
     void convertForRest();
     void convertVarAssign(bool literalOnly=false);
+    void convertIdent(short symidx, bool isGvar, bool objInArr);
+    void convertArrIdx();
     void convertBlockSet();
     void convertBlockSetIf();
     void convertBlock();

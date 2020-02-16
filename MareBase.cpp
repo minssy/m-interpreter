@@ -196,7 +196,8 @@ MareBase::kind2Str(CodeSet const& cd)
     case IntNum: return to_string((long)cd.numVal);
     case DblNum: return to_string(cd.numVal);
     case String: return string("\"") + cd.text + "\"";
-    case System: case GetProperty: case SetProperty: case Math:
+    case System: case Math:
+    case GetProperty: case SetProperty: case StructItem:
         return /*kind2Str(cd.kind) + "." +*/ mutil.getSubCmdStr(cd.symIdx);
     case Throws: 
         return transToken(cd.symIdx);
@@ -393,25 +394,29 @@ MareBase::printInfos(bool all) {
     }
     max =  Gtable.size();
     cout << endl << "  ************** Global Table (" << max << ")*********** ";
-    cout << endl << "id kind type adr len args frame : name";
+    cout << endl << " id kind type adr len args frame ref : name";
     for (i=0; i<max; i++){
         SymTbl tb = Gtable[i];
-        cout << endl << " " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
-             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame << "    :  " << tb.name;
+        cout << endl << "  " << i << " : " << tb.symKind << "   " << (int)tb.dtTyp << "   "
+             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame
+             << "    "  << tb.ref << "    :  " << tb.name;
     }
     max =  Ltable.size();
     cout << endl << "  ************** Local Table (" << max << ")************ "; 
     for (i=0; i<max; i++){
         SymTbl tb = Ltable[i];
-        cout << endl << " " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
-             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame << "    :  " << tb.name;
+        cout << endl << "  " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
+             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame
+             << "    "  << tb.ref << "    :  " << tb.name;
     }
     max =  Itable.size();
     cout << endl << "  ************** Struct Items (" << max << ")************ "; 
+    cout << endl << " id type ownerId offset : name (= initValue)";
     for (i=0; i<max; i++){
         ItemTbl tb = Itable[i];
-        cout << endl << " " << i << " : " << (int)tb.dtTyp << " " << (int)tb.symId << " " << tb.name;
-        if (tb.initTyp != NON_T) cout << " = " << tb.initVal << " or '" << tb.initStr << "'";
+        cout << endl << " " << i << " :  " << (int)tb.dtTyp << "   " << (int)tb.symId
+             << "       " << (int)tb.offset << "     : " << tb.name;
+        if (tb.initTyp != NON_T) cout << "   = " << tb.initVal << " or '" << tb.initStr << "'";
     }
 
     cout << endl << DynamicMem.to_string();

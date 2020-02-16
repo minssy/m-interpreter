@@ -107,12 +107,12 @@ MareInitExec::chkSyntax()
         case Foreach:
             code = nextCode();
             code = chkNextCode(code, '(');
-            dt = symTablePt(code)->dtTyp;                     /* 임시 변수 타입 */
-            getMemAdrs(code, varSymType);                     /* 임시 변수 주소 */
+            //dt = symTablePt(code)->dtTyp;                     /* 임시 변수 타입 */
+            getMemAdrs(code, varSymType, dt);                   /* 임시 변수 주소 */
             if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE);
             code = chkNextCode(code, ':');
             if (symTablePt(code)->dtTyp != dt) errorExit(tecINCORRECT_TYPE);
-            getMemAdrs(code, varSymType);
+            getMemAdrs(code, varSymType, dt);
             if (varSymType == varId) errorExit(tecNEED_ARRAY_TYPE);
             code = chkNextCode(code, ')');
             chkEofLine();
@@ -121,7 +121,7 @@ MareInitExec::chkSyntax()
             code = nextCode();
             code = chkNextCode(code, '(');
             addDbgCode(Expression, CONDITIONAL_TYPE, 1);
-            getMemAdrs(code, varSymType);                     /* 제어 변수 주소 */
+            getMemAdrs(code, varSymType, dt);                 /* 제어 변수 주소 */
             if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE);
             getExpression_syntax('=', ';');                   /* 초깃값 */            
             changeDbgCode(Expression, CONDITIONAL_TYPE, 0);
@@ -170,12 +170,13 @@ MareInitExec::chkSyntax()
             code = nextCode(); 
             if (!isNumericType(symTablePt(code)->dtTyp))
                 errorExit(tecNEED_NUMBER_TYPE, "Numeric Type only (++, --)");
-            getMemAdrs(code, varSymType);                     /* 좌변 주소 확인 */
+            getMemAdrs(code, varSymType, dt);                 /* 좌변 주소 확인 */
             if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Leading operator (++, --)");
-            chkEofLine();                                  /* 라인의 끝인지 확인 */
+            if (dt != INT_T && dt != DBL_T) errorExit(tecNEED_NUMBER_TYPE, "Leading operator (++, --)");
+            chkEofLine();                                     /* 라인의 끝인지 확인 */
             break;
         default:
-            errorExit(tecINCORRECT_SYNTAX, "잘못된 기술입니다.");
+            errorExit(tecINCORRECT_SYNTAX, "Not use the first of line");
         }
     }
 
@@ -221,38 +222,55 @@ MareInitExec::updateCode() {
     }    
 }
 
+
 void 
 MareInitExec::assignVariable(bool strict)
 {
     CodeSet save = code;
     SymKind varSymType;
-    getMemAdrs(code, varSymType);                            /* 좌변 주소 확인 */
+    DtType dt;
+    getMemAdrs(code, varSymType, dt);                        /* 좌변 주소 확인 */
     if (code.kind == '.') {
         if (strict) errorExit(tecNEED_VARIABLE_TYPE);
         return setProperty_syntax(save, varSymType);
     }
-    if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "type:", to_string((int)varSymType));
+    cout << endl << " var:" << varSymType << " " << dt;
+    // if (varSymType == objectId && code.kind != '=') 
+    //     errorExit(tecINVALID_ASSIGN, "assign(=) only -type:", to_string((int)varSymType));
+    // else if (varSymType != varId) 
+    //     errorExit(tecINVALID_ASSIGN, "type:", to_string((int)varSymType));
 
-    DtType dt = symTablePt(save)->dtTyp;
-    returnValue.init(dt);
-    returnValue = getInitVar(dt);
-    addDbgCode(code);
-    if (code.kind == '=')
-        returnValue = getExpression_syntax(code.kind, 0);
-    else if (code.kind == PlusAssign)
-        returnValue += getExpression_syntax(code.kind, 0);
-    else if (code.kind == MinusAssign)
-        returnValue -= getExpression_syntax(code.kind, 0);
-    else if (code.kind == MultiAssign)
-        returnValue *= getExpression_syntax(code.kind, 0);
-    else if (code.kind == DiviAssign)
-        returnValue /= getExpression_syntax(code.kind, 0);
-    else if (code.kind == DBPlusR || code.kind == DBMinusR) {
-        if (!isNumericType(dt)) errorExit(tecNEED_NUMBER_TYPE);
-        code = nextCode();  
+    if (varSymType == objectId && code.kind == '=') {
+        // struct가 같은지 확인...
+        code = nextCode(); 
+        getMemAdrs(code, varSymType, dt);
+    }
+    else if (varSymType == varId) {
+        cout << endl << " assignType:" << kind2Str(code);
+        //DtType dt = symTablePt(save)->dtTyp;  /* struct와 같은 경우 에러발생 */
+        returnValue.init(dt);
+        returnValue = getInitVar(dt);
+        addDbgCode(code);
+        if (code.kind == '=')
+            returnValue = getExpression_syntax(code.kind, 0);
+        else if (code.kind == PlusAssign)
+            returnValue += getExpression_syntax(code.kind, 0);
+        else if (code.kind == MinusAssign)
+            returnValue -= getExpression_syntax(code.kind, 0);
+        else if (code.kind == MultiAssign)
+            returnValue *= getExpression_syntax(code.kind, 0);
+        else if (code.kind == DiviAssign)
+            returnValue /= getExpression_syntax(code.kind, 0);
+        else if (code.kind == DBPlusR || code.kind == DBMinusR) {
+            if (!isNumericType(dt)) errorExit(tecNEED_NUMBER_TYPE);
+            code = nextCode();  
+        }
+        else {
+            errorExit(tecINCORRECT_SYNTAX, "wrong assign");
+        }
     }
     else {
-        errorExit(tecINCORRECT_SYNTAX);
+        errorExit(tecINVALID_ASSIGN, "type:", to_string((int)varSymType));
     }
 }
 
@@ -317,24 +335,61 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
  * 단순 변수 또는 배열 요소의 주소를 반환. 
  * 배열인지 확인하기 위해 내부적으로 nextCode()를 호출함 */
 int 
-MareInitExec::getMemAdrs(CodeSet const& cd, SymKind& objType)
+MareInitExec::getMemAdrs(CodeSet const& cd, SymKind& objType, DtType& varTp)
 {
     int adr=0;
+    short symTbIdx = cd.symIdx;
     adr = getTopAdrs(cd);
-    objType = symTablePt(cd)->symKind;
+    auto varSymPt = symTablePt(cd);
+    objType = varSymPt->symKind;
+    varTp = varSymPt->dtTyp;
     if (objType == paraId) objType = varId;
-    cout << endl << "getMemAdrs:" << symTablePt(cd)->name << " " << objType;
+    cout << endl << "getMemAdrs:" << varSymPt->name << " " << objType;
     code = nextCode();
-    if (objType == varId) return adr;             /* 변수가 배열이 아닌 경우 */
+    if (objType == varId) return adr;       /* 변수가 배열이 아닌 경우 */
 
-    if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
-         return adr;
+    if (code.kind == '[') {
+        if (!(objType == arrayId || objType == arrListId))
+            errorExit(tecINVALID_VARIABLE_TYPE, "not array");
+        
+        double d;
+        d = getExpression_syntax('[', ']').getDbl(); 
+        if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
+
+        if (varSymPt->dtTyp == OBJECT_T) {
+            objType = objectId;
+            // symTbIdx 업데이트??
+            symTbIdx = varSymPt-> ref;
+        }
+        else objType = varId;               /* 배열등의 요소임 */
     }
-    objType = varId;                              /* 배열등의 요소임 */
-    double d;
-    d = getExpression_syntax('[', ']').getDbl(); 
-    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
-    return adr;               /* 구문 검사인 경우 */
+
+    if (code.kind == StructItem) {
+        if (objType != objectId) errorExit(tecINCORRECT_SYNTAX, "wrong StructItem");
+        objType = varId;                    /* Struct의 요소임 */
+        bool finded = false;
+        for(ItemTbl it : Itable) {
+            cout << endl << it.toFullString(true);
+            if (it.symId == symTbIdx && it.offset == code.symIdx) {
+                varTp = it.dtTyp;
+                finded = true;
+                break;
+            }
+        }
+        if (!finded) errorExit(tecINVALID_NAME, "why not found?");
+
+        code = nextCode();
+    }
+    return adr;                             /* 구문 검사인 경우 */
+
+    // if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
+    //      return adr;
+    // }
+    // objType = varId;                              /* 배열등의 요소임 */
+    // double d;
+    // d = getExpression_syntax('[', ']').getDbl(); 
+    // if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
+    // return adr;               /* 구문 검사인 경우 */
 }
 
 /** 
@@ -420,9 +475,10 @@ MareInitExec::factor_syntax()
         break;
     case Gvar: case Lvar:
         {
-        DtType tmpTp = symTablePt(code)->dtTyp;
+        //DtType tmpTp = symTablePt(code)->dtTyp;
+        DtType tmpTp;
         SymKind varSymTypeTmp;
-        getMemAdrs(code, varSymTypeTmp); 
+        getMemAdrs(code, varSymTypeTmp, tmpTp); 
         if (code.kind == '.') {
             code = nextCode();
             if (code.kind != GetProperty)
@@ -587,9 +643,10 @@ MareInitExec::execSysFunc_syntax(bool needReturn)
         code = chkNextCode(code, '(');
         auto symPt = symTablePt(code);             /* 변수 속성: 순서에 주의(getMemAdrs보다 먼저) */
         if (symPt->symKind == varId) errorExit(tecINVALID_TYPE, "Need a variable of array");
-        int varAdrs = getMemAdrs(code, varSymType);
+        DtType varType;
+        int varAdrs = getMemAdrs(code, varSymType, varType);
         if (varSymType != varId) errorExit(tecINVALID_TYPE, "Required a variable of array");
-        VarObj oo; oo.init(symPt->dtTyp);
+        VarObj oo; oo.init(varType);
         code = chkNextCode(code, ',');
         oo = getExpression_syntax(0, 0);           /* type 확인 */
         code = chkNextCode(code, ',');

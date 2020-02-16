@@ -1321,6 +1321,7 @@ MareExecuter::nextCode()
     case System:
     case GetProperty: 
     case SetProperty:
+    case StructItem:
     case Math:
     case Throws:
         tblIdx = *SHORT_P(code_ptr); code_ptr += SHORT_SIZE;

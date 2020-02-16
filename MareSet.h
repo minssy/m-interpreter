@@ -22,6 +22,7 @@
 #include <regex>
 
 #include "Blob.h"
+//#include "VarObj.h"
 
 namespace mare_vm {
 
@@ -161,11 +162,12 @@ struct SymTbl
     unsigned short   aryLen;  /* 배열길이, 0=단순변수 (func일 경우, 최소 인수개수) */
     unsigned short   args;    /* 함수의 인수 개수 (메모리 버퍼 크기) */
     unsigned short   frame;   /* 함수의 프래임 크기 (struct item 갯수) */
+    unsigned short   ref;
 
     SymTbl() { clear(); }
     void clear() {
         name = ""; symKind=noId; dtTyp=NON_T; 
-        adrs=0; aryLen=0; args=0; frame=1; 
+        adrs=0; aryLen=0; args=0; frame=1; ref=0;
     }
 
     std::string toFullString(bool isHumanReadable=false) {
@@ -186,9 +188,10 @@ struct SymTbl
             else if (dtTyp == INT_T) { str.append("int "); }
             else if (dtTyp == STR_T) { str.append("string "); }
             else if (dtTyp == DATETIME_T) { str.append("datetime "); }
-            else if (dtTyp == OBJECT_T) { str.append("struct "); }
+            //else if (dtTyp == OBJECT_T) { str.append("struct "); }
             else if (dtTyp == NON_T) { str.append("void(none) "); }
-            else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+            //else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+            else { str.append("struct "); }
         }
         else {
             str.reserve(30);      // 메모리 확보
@@ -209,15 +212,17 @@ struct SymTbl
 struct ItemTbl 
 {
     unsigned short   symId;   /* struct의 symtbl id */
+    unsigned short   offset;
     std::string      name;    /* Item의 이름 */
     DtType           dtTyp;   /* 타입 (NON_T, DBL_T,...) 변수타입 */
+    //VarObj           initObj;
     DtType           initTyp;
     double           initVal; /* 초기값 */
     std::string      initStr; /* 초기값 */
 
     ItemTbl() { clear(); }
     void clear() {
-        name = ""; symId=0; dtTyp=NON_T; 
+        name = ""; symId=0; offset=0; dtTyp=NON_T; //initObj.init(NON_T);
         initTyp=NON_T; initVal=0; initStr=""; 
     }
 
@@ -225,7 +230,6 @@ struct ItemTbl
         std::string str("");
         if (isHumanReadable) {
             str.reserve(40);      // 메모리 확보
-
             if (dtTyp == DBL_T) { str.append("double "); }
             else if (dtTyp == INT_T) { str.append("int "); }
             else if (dtTyp == STR_T) { str.append("string "); }
@@ -238,14 +242,17 @@ struct ItemTbl
             str.append(std::to_string((unsigned short)dtTyp));
         }
         str.append(" ").append(std::to_string(symId));
-        str.append(" ").append(name).append(" ");
+        str.append(" ").append(std::to_string(offset));
+        str.append(" ").append(name);
         str.append(" ").append(std::to_string(initTyp));
         if (initTyp == NON_T) return str;
+
         if (initTyp == STR_T)
             str.append(" ").append(initStr);
         else {
-            //string str = to_string_with_precision(initVal);
-            //to_string_simple(str);
+            //std::string strVal = to_string_with_precision(initVal);
+            //to_string_simple(strVal);
+            //str.append(" ").append(strVal);
             str.append(" ").append(std::to_string(initVal));
         }
 
@@ -315,7 +322,6 @@ struct ErrObj
         }
         return err;
     }
-
 };
 
 }

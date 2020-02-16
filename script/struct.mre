@@ -11,6 +11,7 @@ struct pointSet
     int x
     int y
     int z
+    string name
 }
 
 struct point2Set 
@@ -32,6 +33,9 @@ pointSet pts[3]
 pts[0].x = 4
 pts[0].y = 5
 pts[0].z = 6
+pts[0].name = "zero"
+
+int lth = pts[0].name.size()
 
 pts[1] = pt1
 
@@ -39,10 +43,11 @@ pts[3].x = pt2.x
 pts[3].y = pt2.y
 pts[3].z = 30
 
-pointSet pt3 = pts[0]
+pointSet pt3
+
+pt3 = pts[0]
 
 arrayList<pointSet> ptlist
 
-ptlist.add(pt1)
-
+//ptlist.add(pt1) // 아직임...
 

@@ -76,62 +76,62 @@ enum TECcodes
 static std::map<int, std::string> setVector() {
     std::map<int, std::string> str;
 
-    str.insert(std::make_pair(161, "tecCONTRACT_SYNTAX_ERROR"));
-    str.insert(std::make_pair(162, "tecCONTRACT_PREPROCESS_ERROR"));
-    str.insert(std::make_pair(163, "tecCONTRACT_EXECUTE_ERROR"));
-    str.insert(std::make_pair(164, "tecCONTRACT_REQUIRE_FAIL"));
-    str.insert(std::make_pair(165, "tecUNKNOWN_ERROR"));
+    str.insert(std::make_pair(tecCONTRACT_SYNTAX_ERROR, "tecSYNTAX_ERROR"));
+    str.insert(std::make_pair(tecCONTRACT_PREPROCESS_ERROR, "tecPREPROCESS_ERROR"));
+    str.insert(std::make_pair(tecCONTRACT_EXECUTE_ERROR, "tecEXECUTE_ERROR"));
+    str.insert(std::make_pair(tecCONTRACT_REQUIRE_FAIL, "tecREQUIRE_FAIL"));
+    str.insert(std::make_pair(tecUNKNOWN_CONTRACT_ERROR, "tecUNKNOWN_ERROR"));
 
-    str.insert(std::make_pair(166, "tecEXCEED_CODE_LENGTH"));
-    str.insert(std::make_pair(167, "tecEXCEED_CODE_LINES"));
-    str.insert(std::make_pair(168, "tecBAD_ALLOCATE_MEMORY"));
-    str.insert(std::make_pair(169, "tecSTACK_UNDERFLOW"));
-    str.insert(std::make_pair(170, "tecINVALID_SYSTEM_METHOD"));
+    str.insert(std::make_pair(tecEXCEED_CODE_LENGTH, "tecEXCEED_CODE_LENGTH"));
+    str.insert(std::make_pair(tecEXCEED_CODE_LINES, "tecEXCEED_CODE_LINES"));
+    str.insert(std::make_pair(tecBAD_ALLOCATE_MEMORY, "tecBAD_ALLOCATE_MEMORY"));
+    str.insert(std::make_pair(tecSTACK_UNDERFLOW, "tecSTACK_UNDERFLOW"));
+    str.insert(std::make_pair(tecINVALID_SYSTEM_METHOD, "tecINVALID_SYSTEM_METHOD"));
 
-    str.insert(std::make_pair(171, "tecINVALID_TYPE"));
-    str.insert(std::make_pair(172, "tecINVALID_NAME"));
-    str.insert(std::make_pair(173, "tecNO_VARIABLE"));
+    str.insert(std::make_pair(tecINVALID_TYPE, "tecINVALID_TYPE"));
+    str.insert(std::make_pair(tecINVALID_NAME, "tecINVALID_NAME"));
+    str.insert(std::make_pair(tecNO_VARIABLE, "tecNO_VARIABLE"));
 
-    str.insert(std::make_pair(174, "tecNEED_INIT_VARIABLE"));
+    str.insert(std::make_pair(tecNEED_INIT_VARIABLE, "tecNEED_INIT_VARIABLE"));
     str.insert(std::make_pair(tecNEED_INITIALIZE, "tecNEED_INITIALIZE"));
     str.insert(std::make_pair(tecINVALID_VARIABLE_TYPE, "tecINVALID_VARIABLE_TYPE"));
     str.insert(std::make_pair(tecEXCEED_ARRAY_LENGTH, "tecEXCEED_ARRAY_LENGTH"));
     //str.insert(std::make_pair(tecBAD_MULTI_DIMENTION_ARRAY, "tecBAD_MULTI_DIMENTION_ARRAY"));
 
-    str.insert(std::make_pair(178, "tecNO_FUNC"));
-    str.insert(std::make_pair(179, "tecINVALID_FUNC_ARGUMENT"));
-    str.insert(std::make_pair(180, "tecINVALID_FUNC_RETURN"));
+    str.insert(std::make_pair(tecNO_FUNC, "tecNO_FUNC"));
+    str.insert(std::make_pair(tecINVALID_FUNC_ARGUMENT, "tecINVALID_FUNC_ARGUMENT"));
+    str.insert(std::make_pair(tecINVALID_FUNC_RETURN, "tecINVALID_FUNC_RETURN"));
 
-    str.insert(std::make_pair(181, "tecINCORRECT_SYNTAX"));
-    str.insert(std::make_pair(182, "tecINCORRECT_BLACKET"));
-    str.insert(std::make_pair(183, "tecINCORRECT_TYPE"));
+    str.insert(std::make_pair(tecINCORRECT_SYNTAX, "tecINCORRECT_SYNTAX"));
+    str.insert(std::make_pair(tecINCORRECT_BLACKET, "tecINCORRECT_BLACKET"));
+    str.insert(std::make_pair(tecINCORRECT_TYPE, "tecINCORRECT_TYPE"));
 
-    str.insert(std::make_pair(184, "tecINCORRECT_EXPRESSION"));
-    str.insert(std::make_pair(185, "tecINCORRECT_ADDRESS_FORMAT"));
-    str.insert(std::make_pair(186, "tecINCORRECT_AMOUNT_FORMAT"));
-    str.insert(std::make_pair(187, "tecINCORRECT_TIME_FORMAT"));
-    str.insert(std::make_pair(188, "tecINCORRECT_LITERAL_FORMAT"));
-    str.insert(std::make_pair(189, "tecINCORRECT_OBJECTID_FORMAT"));
+    str.insert(std::make_pair(tecINCORRECT_EXPRESSION, "tecINCORRECT_EXPRESSION"));
+    str.insert(std::make_pair(tecINCORRECT_ADDRESS_FORMAT, "tecINCORRECT_ADDRESS_FORMAT"));
+    str.insert(std::make_pair(tecINCORRECT_AMOUNT_FORMAT, "tecINCORRECT_AMOUNT_FORMAT"));
+    str.insert(std::make_pair(tecINCORRECT_TIME_FORMAT, "tecINCORRECT_TIME_FORMAT"));
+    str.insert(std::make_pair(tecINCORRECT_LITERAL_FORMAT, "tecINCORRECT_LITERAL_FORMAT"));
+    str.insert(std::make_pair(tecINCORRECT_OBJECTID_FORMAT, "tecINCORRECT_OBJECTID_FORMAT"));
     
-    str.insert(std::make_pair(190, "tecDIVIDE_ZERO"));
-    str.insert(std::make_pair(191, "tecINVALID_ASSIGN"));
-    str.insert(std::make_pair(192, "tecINVALID_CALC_TYPE"));
-    str.insert(std::make_pair(193, "tecINVALID_VALUE"));
-    str.insert(std::make_pair(194, "tecINVALID_AMOUNT"));
+    str.insert(std::make_pair(tecDIVIDE_ZERO, "tecDIVIDE_ZERO"));
+    str.insert(std::make_pair(tecINVALID_ASSIGN, "tecINVALID_ASSIGN"));
+    str.insert(std::make_pair(tecINVALID_CALC_TYPE, "tecINVALID_CALC_TYPE"));
+    str.insert(std::make_pair(tecINVALID_VALUE, "tecINVALID_VALUE"));
+    str.insert(std::make_pair(tecINVALID_AMOUNT, "tecINVALID_AMOUNT"));
 
-    str.insert(std::make_pair(195, "tecNEED_UNSIGNED_INTEGER"));
-    str.insert(std::make_pair(196, "tecNEED_ARRAY_TYPE"));
-    str.insert(std::make_pair(197, "tecNEED_NUMBER_TYPE"));
-    str.insert(std::make_pair(198, "tecNEED_VARIABLE_TYPE"));
-    str.insert(std::make_pair(199, "tecNEED_LITERAL_TYPE"));
+    str.insert(std::make_pair(tecNEED_UNSIGNED_INTEGER, "tecNEED_UNSIGNED_INTEGER"));
+    str.insert(std::make_pair(tecNEED_ARRAY_TYPE, "tecNEED_ARRAY_TYPE"));
+    str.insert(std::make_pair(tecNEED_NUMBER_TYPE, "tecNEED_NUMBER_TYPE"));
+    str.insert(std::make_pair(tecNEED_VARIABLE_TYPE, "tecNEED_VARIABLE_TYPE"));
+    str.insert(std::make_pair(tecNEED_LITERAL_TYPE, "tecNEED_LITERAL_TYPE"));
     
-    str.insert(std::make_pair(200, "tecNEED_LINE_END"));
-    str.insert(std::make_pair(201, "tecNEED_OPEN_BLOCK"));
-    str.insert(std::make_pair(202, "tecNEED_CLOSE_BLOCK"));
-    str.insert(std::make_pair(203, "tecNEED_CLOSE_LITERAL"));
+    str.insert(std::make_pair(tecNEED_LINE_END, "tecNEED_LINE_END"));
+    str.insert(std::make_pair(tecNEED_OPEN_BLOCK, "tecNEED_OPEN_BLOCK"));
+    str.insert(std::make_pair(tecNEED_CLOSE_BLOCK, "tecNEED_CLOSE_BLOCK"));
+    str.insert(std::make_pair(tecNEED_CLOSE_LITERAL, "tecNEED_CLOSE_LITERAL"));
 
-    str.insert(std::make_pair(204, "tecSRC_IS_DST"));
-    str.insert(std::make_pair(205, "tecNOT_DEFINED_ERROR"));
+    str.insert(std::make_pair(tecSRC_IS_DST, "tecSRC_IS_DST"));
+    str.insert(std::make_pair(tecNOT_DEFINED_ERROR, "tecNOT_DEFINED_ERROR"));
 
     return str;
 }
