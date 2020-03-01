@@ -175,7 +175,7 @@ MareInitExec::chkSyntax()
             chkEofLine();                                  /* 라인의 끝인지 확인 */
             break;
         default:
-            errorExit(tecINCORRECT_SYNTAX, "잘못된 기술입니다.");
+            errorExit(tecINCORRECT_SYNTAX, "Not use the first of line");
         }
     }
 

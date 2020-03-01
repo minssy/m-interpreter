@@ -55,14 +55,14 @@ enum TknKind {
   VarStr, 
   VarDateTime, 
   ArrayList,
-
+  
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
   
   DblNum=21,      /* double type */
   IntNum,         /* int type */
   String,         /* string type */
 
-  DeclareVar=31,
+  DeclareVar=30,
   DeclareArr,
   Not='!',  DblQ='"', Mod='%', SglQ='\'', // 33, 34, 37, 39
   Lparen='(', Rparen=')',  // 40, 41
@@ -262,7 +262,6 @@ struct ErrObj
         }
         return err;
     }
-
 };
 
 }

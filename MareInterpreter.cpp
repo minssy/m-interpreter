@@ -100,7 +100,6 @@ MareInterpreter::convertAll(vector<string> &src)
                 break;
             case For:     /* for문의 초기값, 검증, 증감조건 순서를 실행시 유리하도록 변경 */
                 {
-
                 strInfo = srcWork[srcLineNo-1];
                 size_t idx1 = strInfo.find_first_of(';');
                 if (idx1 == string::npos) errorExit(tecINCORRECT_SYNTAX, "wrong for statement (semicolon not found)");
@@ -124,7 +123,7 @@ MareInterpreter::convertAll(vector<string> &src)
 
     } // while
 
-    printInfos(); // 디버깅용 
+    printInfos(false); // 디버깅용 
 
     if (funcInfos.size() == 0) {
         JLOG(mutil.j_.warn()) << "호출 가능한 함수가 없습니다.";
@@ -155,7 +154,7 @@ MareInterpreter::convertAll(vector<string> &src)
 void 
 MareInterpreter::convert()
 {
-    JLOG(mutil.j_.trace()) << "* convert: " << kind2Str(token.kind);
+    JLOG(mutil.j_.trace()) << "* convert: " << kind2Str(token.kind) << " " <<token.text;
     switch (token.kind) {
 
     case VarInt:
@@ -368,8 +367,7 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             if (bracketLevel == 0) inBracket = false;
             if (bracketLevel < 0) errorExit(tecINCORRECT_BLACKET);
         }
-        else 
-            chkKinds(token);
+        else chkKinds(token);
 
         switch (token.kind) {
 
@@ -407,6 +405,8 @@ MareInterpreter::convertVarAssign(bool literalOnly)
             break;
         case System:
         {
+            if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
+                "Only literal values are allowed to initialize function arguments.");
             TknKind tp = token.kind;
             token = nextTkn(); token = chkNextTkn(token, '.');
             setCode(tp, mutil.getIdx(tp, token.text));
@@ -415,7 +415,6 @@ MareInterpreter::convertVarAssign(bool literalOnly)
         case Math:
         {
             if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
-                //"함수 인자 초기값에는 리터럴 값만 가능합니다.",
                 "Only literal values are allowed to initialize function arguments.");
             TknKind tp = token.kind;
             token = nextTkn(); token = chkNextTkn(token, '.');
@@ -596,6 +595,9 @@ void
 MareInterpreter::arrayListDeclare()
 {
     JLOG(mutil.j_.trace()) << "*** arrayList declear ***";
+    if (blkNest > 0 || funcDeclFlag) 
+        errorExit(tecINCORRECT_SYNTAX, "Struct declaration location is invalid.");
+
     token = nextTkn();
     token = chkNextTkn(token, Less);
     TknKind varType = token.kind;
@@ -619,7 +621,7 @@ MareInterpreter::funcDeclare()
     int tblIdx, patch_line, fncTblIdx;
     
     if (blkNest > 0 || funcDeclFlag) 
-        errorExit(tecINCORRECT_SYNTAX, "Incorrect function declaration position.");
+        errorExit(tecINCORRECT_SYNTAX, "Function declaration location is invalid.");
 
     funcDeclFlag = true;                               /* 함수 처리 시작 확인 플래그 */
     localAdrs = 0;                                     /* 로컬 영역 할당 카운터 초기화 */
