@@ -202,8 +202,9 @@ MareExecuter::statement()
     if (Pc>maxCodeLine || exitFlag) return;                 /* 프로그램 종료 */
 
     code = save = firstCode(Pc);                            /* 현재 line의 시작 코드 */
+    cout << endl << " ???? " << (int)code.kind << " " << blkNest;
     if (code.kind != EofLine) initDbgCode(code);
-    else { initDbgCode(); ++Pc; return; }
+    else { cout << "a"; initDbgCode(); cout << "b"; ++Pc; return; }
     top_line = Pc; end_line = code.jmpAdrs;                 /* 코드 제어 범위의 시작과 끝 설정 */
 
     JLOG(mutil.j_.trace()) << " ===== Start statement ( Line No. "
@@ -227,6 +228,25 @@ MareExecuter::statement()
             else errorExit(tecINCORRECT_SYNTAX);
         } while (code.kind == DeclareArr || code.kind == DeclareVar);
         }
+        ++Pc;
+        break;
+    case VarStruct:
+    {
+        code = save = nextCode();
+        DtType dt;
+        varAdrs = getMemAdrs(code, varSymType, dt);    /* 저장할 변수 주소 */
+        if (varSymType == objectId) {                 /* struct */
+            short obj_type = symTablePt(save)->ref;
+            for (ItemTbl it : Itable) {
+                if (it.symId == obj_type) {
+                    wkVal.init(it.initTyp);
+                    if (it.initTyp == STR_T) { wkVal.set(it.initStr); }
+                    else if (it.initTyp != NON_T) {wkVal.set(it.initVal); }
+                    DynamicMem.set(varAdrs + it.offset, wkVal);
+                }
+            }
+        }
+    }
         ++Pc;
         break;
     case Gvar: 
@@ -277,8 +297,10 @@ MareExecuter::statement()
     case Foreach:									        /* foreach : 제어변수, 배열 */
     {
         code = nextCode(); code = nextCode();
-        wkVal.init(symTablePt(code)->dtTyp);                /* 제어변수 타입 설정 */
-        int varAdrs = getMemAdrs(code, varSymType);         /* 제어 변수의 주소 구하기 */
+
+        DtType dt;
+        int varAdrs = getMemAdrs(code, varSymType, dt);     /* 제어 변수의 주소 구하기 */
+        wkVal.init(dt);                                     /* 제어변수 타입 설정 */
         code = nextCode();                                  /* skip ':' */
         int idxAdr = getTopAdrs(code);                      /* 배열 변수의 시작주소 구하기 */
         unsigned short idxLen = symTablePt(code)->aryLen;
@@ -301,7 +323,8 @@ MareExecuter::statement()
     }
     case For:										        /* for : 제어변수, 초깃값, 최종값, 증분식 */
         code = nextCode(); save = nextCode();
-        varAdrs = getMemAdrs(save, varSymType);             /* 제어 변수의 주소 구하기 */
+        DtType dt;
+        varAdrs = getMemAdrs(save, varSymType, dt);         /* 제어 변수의 주소 구하기 */
         expression('=', ';');                               /* 제어 변수의 초기값 계산 */
 
         if (!isNumericType(mstk.topType())) 
@@ -385,7 +408,8 @@ MareExecuter::statement()
     {
         TknKind ctk = code.kind;
         code = nextCode(); 
-        int varAdrs = getMemAdrs(code, varSymType);    /* 저장할 변수 주소 */
+        DtType dt;
+        int varAdrs = getMemAdrs(code, varSymType, dt);/* 저장할 변수 주소 */
         VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
         if (ctk == DBPlus) ++old;
         else --old;
@@ -587,159 +611,47 @@ void
 MareExecuter::assignVariable(CodeSet const save, bool declare) 
 {
     addDbgCode(save);
-    int varAdrs = getMemAdrs(code, varSymType);       /* 저장할 변수 주소 */
+    DtType dt;
+    int varAdrs = getMemAdrs(code, varSymType, dt);    /* 저장할 변수 주소 */
     
     if (code.kind == '.') {                            /* setProperty 처리 */
         return setPropertyRun(save, varSymType);
-
-        // code = nextCode();
-        // addDbgCode(code);
-        // int diffLength = 1;
-        // if (code.symIdx == Resize) {
-        //     code = nextCode();
-        //     double nsz = getExpression('(', ')').getDbl();/* 변경될 크기 값 */
-        //     if (nsz < 1 || nsz != (int)nsz) errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
-        //     int osz = symTablePt(save)->aryLen;
-        //     diffLength = nsz - osz;
-        //     if (diffLength != 0) {
-        //         if (diffLength > 0) { // insert
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, diffLength, true);
-        //             VarObj objTmp;
-        //             objTmp.init(symTablePt(save)->dtTyp);
-        //             // memory update
-        //             DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
-        //         }
-        //         else { // erase
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, diffLength, true);
-        //             // memory update
-        //             diffLength *= -1;
-        //             DynamicMem.updateShrink(varAdrs + osz - diffLength, diffLength);
-        //         }
-        //         isUpdatedSymbols = true;
-        //     }
-        // }
-        // else if (code.symIdx == Add) {
-        //     code = nextCode();
-        //     VarObj vo = getExpression('(', 0);
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     // 타입 검사 필요함.
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == NOT_DEFINED_ARRAY) osz = 0;
-        //     if ((osz + diffLength) >= bsz) {
-        //         short kk = osz + diffLength - bsz;
-        //         if (kk > MEMORY_BACK_RESIZE) {
-        //             kk = (kk / MEMORY_BACK_RESIZE) + 1;
-        //         }
-        //         else kk = 1;
-        //         updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
-        //         VarObj objTmp;
-        //         objTmp.init(symTablePt(save)->dtTyp);
-        //         DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-        //     }
-        //     symTablePt(save)->aryLen = osz + diffLength;
-        //     for (short idx=0; idx<diffLength; idx++)
-        //         DynamicMem.set(varAdrs + osz + idx, vo);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Insert) {
-        //     code = nextCode();
-        //     VarObj vo = getExpression('(', 0);
-        //     int idx = getExpression(',', 0).getDbl();
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == NOT_DEFINED_ARRAY) osz = 0;
-        //     if ((osz + diffLength) >= bsz) {
-        //         cout << endl << " && insert expand &&";
-        //         short kk = osz + diffLength - bsz;
-        //         if (kk > MEMORY_BACK_RESIZE) {
-        //             kk = (kk / MEMORY_BACK_RESIZE) + 1;
-        //         }
-        //         else kk = 1;
-        //         updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
-        //         VarObj objTmp;
-        //         objTmp.init(symTablePt(save)->dtTyp);
-        //         DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-        //         bsz = symTablePt(save)->args;
-        //     }
-        //     cout << endl << " && insert1 && " << varAdrs << " " << osz;
-        //     symTablePt(save)->aryLen = osz + diffLength;
-        //     cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
-        //     DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Remove) {
-        //     code = nextCode();
-        //     int idx = getExpression('(', 0).getDbl();
-        //     if (code.kind == ',') {
-        //         diffLength = getExpression(',', 0).getDbl();
-        //         if (diffLength < 1)
-        //             errorExit(tecNEED_UNSIGNED_INTEGER);
-        //     }
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz == 0 || osz == NOT_DEFINED_ARRAY)
-        //         errorExit(tecEXCEED_ARRAY_LENGTH, symTablePt(save)->name, " has no item.");
-        //     if ((idx+diffLength) > osz) errorExit(tecEXCEED_ARRAY_LENGTH);
-        //     symTablePt(save)->aryLen = osz - diffLength;
-        //     DynamicMem.updateRemove(varAdrs + idx, diffLength, varAdrs + bsz - 1);
-        //     isUpdatedSymbols = true;
-        // }
-        // else if (code.symIdx == Clear) {
-        //     code = nextCode();
-        //     code = nextCode();
-        //     int osz = symTablePt(save)->aryLen;
-        //     int bsz = symTablePt(save)->args;
-        //     if (osz != 0 && osz != NOT_DEFINED_ARRAY)
-        //     {
-        //         diffLength = bsz - MEMORY_BACK_RESIZE;
-        //         if (diffLength > 0) {
-        //             // symtbl update
-        //             updateSymTbl(varAdrs, (diffLength * -1), false);
-        //             // memory update
-        //             DynamicMem.updateShrink(varAdrs + bsz - diffLength, diffLength);
-        //         }
-        //         symTablePt(save)->aryLen = 0;
-        //         VarObj vo;
-        //         for (short idx=0; idx<MEMORY_BACK_RESIZE; idx++)
-        //             DynamicMem.set(varAdrs + idx, vo);
-        //         isUpdatedSymbols = true;
-        //     }
-        // }
-        // else throw tecINCORRECT_SYNTAX;
-        // removeDbgCode(); removeDbgCode(); 
-        // return;
     }
 
-    if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
+    if (varSymType == arrayId || varSymType == arrListId) 
+        errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
     VarObj old = DynamicMem.get(varAdrs);          /* 일치하지 않을 경우, 타입 확인하여 값을 저장 */
     JLOG(mutil.j_.trace()) << " * type:" << kind2Str(save.kind)
-            << " varAdrs:" << varAdrs << " " << old.toFullString(true);
+            << ", varAdrs:" << varAdrs << ", " << old.toFullString(true)
+            << ", SymType:" << varSymType << ", DtType:" << dt;
 
     if (code.kind == Assign) {
         addDbgCode(code);
-        if (old.getType() == NON_T) {                   /* 초기화가 필요한 경우 */
-            DtType tmpTp = symTablePt(save)->dtTyp;     /* 변수 타입  */
-            old.init(tmpTp);
+
+        if (varSymType == varId) {
+            if (old.getType() == NON_T) { old.init(dt); }  /* 초기화가 필요한 경우 */
+            expression('=', 0);                            /* 변수에 할당할 값 계산 */
+            old = mstk.pop();                              /* = 대입 작업 수행 */
+            removeDbgCode();
         }
-        expression('=', 0);                            /* 변수에 할당할 값 계산 */
-        old = mstk.pop();                              /* = 대입 작업 수행 */ 
-        removeDbgCode();
+        else if (varSymType == objectId) {                 /* struct */
+            code = nextCode();
+            short obj_type = symTablePt(save)->ref;
+            int oAdrs = getMemAdrs(code, varSymType, dt);  /* 저장할 변수 주소 */
+            JLOG(mutil.j_.trace()) << " * obj type:" << obj_type;
+            for (ItemTbl it : Itable) {
+                if (it.symId == obj_type) {
+                    old.init(it.dtTyp);
+                    old = DynamicMem.get(oAdrs + it.offset);
+                    DynamicMem.set(varAdrs + it.offset, old);
+                }
+            }
+            removeDbgCode();
+            return;
+        }
+        else {
+            errorExit(tecNEED_VARIABLE_TYPE, "Can't assign value to array type");
+        }
     }
     else if (declare && (code.kind == ',' || code.kind == EofLine)) {
         old.init(NON_T);                               /* 변수 선언 상태로 변경 */
@@ -790,11 +702,14 @@ MareExecuter::block()
 {
     blkNest++; 
     TknKind k;
+    cout << endl << " * * * block start";
     while (!breakFlag && !conFlag && !returnFlag && !exitFlag) { /* break, return 등으로 인한 종료 플래그 확인 */
+        cout << endl << " * * * block in -line:" << Pc;
         k = lookCode(Pc);                               /* 다음 line의 시작 코드 확인 */
         if (k==End || k==Else || k==Elif) break;        /* 다음 line이 블록의 정상 종료 조건인지 확인 */
         statement();
     }
+    cout << endl << " * * * block end -line:" << Pc;
     blkNest--; 
 }
 
@@ -874,9 +789,10 @@ MareExecuter::factor()
     case DBMinus:              /* 원래 값(DynamicMem의 값)을 1 감소시켜 저장한 후, stack에 추가(반환) */
         code = nextCode();
         {
+            DtType tmpTp;
             // DtType tmpTp = symTablePt(code)->dtTyp; /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
             addDbgCode(code);
-            int varAdrs = getMemAdrs(code, varSymType);
+            int varAdrs = getMemAdrs(code, varSymType, tmpTp);
             VarObj oo = DynamicMem.get(varAdrs);
             if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
             if (kd == DBPlus) ++oo;
@@ -908,7 +824,7 @@ MareExecuter::factor()
         {
         DtType tmpTp = symTablePt(code)->dtTyp;    /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
         unsigned short tmpSz = symTablePt(code)->aryLen;
-        int varAdrs = getMemAdrs(code, varSymType);
+        int varAdrs = getMemAdrs(code, varSymType, tmpTp);
         VarObj oo = DynamicMem.get(varAdrs);
         JLOG(mutil.j_.trace()) << " ** idObjType:" << varSymType << " "
             << kind2Str((TknKind)tmpTp) << " -> " << oo.toFullString(true);
@@ -1122,7 +1038,7 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
     // 함수의 인수에 값을 저장 처리
     nextCode(); code = nextCode();                         /* Func의 End 위치와 '(' 건너뜀 */
     if (code.kind != ')') {                                /* ')'가 아니면, 인수가 존재함. */
-        short i = 0;
+        short i = 0; DtType dt;
         for (;; code=nextCode()) {
             JLOG(mutil.j_.trace()) << " ** set value of param -name: " << kind2Str(code);
             DtType tmpTp = symTablePt(code)->dtTyp;        /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
@@ -1131,7 +1047,7 @@ MareExecuter::execFunction(short fncIdx, short argCnt)
             int varArgs;
             if (argCnt > 0) {
                 argCnt--;
-                varArgs = getMemAdrs(code, varSymType);
+                varArgs = getMemAdrs(code, varSymType, dt);
                 // if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "배열을 인자값으로 할당 불가");
                 VarObj oo = mstk.pop();
                 JLOG(mutil.j_.trace()) << " ** param assign value: "
@@ -1197,8 +1113,9 @@ MareExecuter::execSysFunc()
         code = nextCode();
         code = nextCode();                              /* toArray, '(' 건너뜀 */
         auto varPt = symTablePt(code);                  /* 변수 속성 : 순서에 주의 (getMemAdrs보다 먼저) */
-        int varAdrs = getMemAdrs(code, varSymType);
-        v.init(varPt->dtTyp);
+        DtType dt;
+        int varAdrs = getMemAdrs(code, varSymType, dt);
+        v.init(dt);
         int maxIdx = varPt->aryLen;
         if (maxIdx == 0 || maxIdx == NOT_DEFINED_ARRAY)
             errorExit(tecNEED_INITIALIZE);
@@ -1300,36 +1217,70 @@ MareExecuter::setParams(vector<VarObj>& vs, short numOfParams) {
  * 단순 변수 또는 배열 요소의 주소를 반환. 
  * 배열인지 확인하기 위해 내부적으로 nextCode()를 호출함 */
 int 
-MareExecuter::getMemAdrs(CodeSet const& cd, SymKind& objType)
+MareExecuter::getMemAdrs(CodeSet const& cd, SymKind& objType, DtType& varTp)
 {
     int adr;
+    short symTbIdx = cd.symIdx;
     adr = getTopAdrs(cd);
     auto symPt = symTablePt(cd);
     objType = symPt->symKind;
+    varTp = symPt->dtTyp;
     if (objType == paraId) objType = varId;
-
+    cout << endl << "getMemAdrs:" << symPt->name << " " << objType;
     code = nextCode();
-    if (objType == varId) return adr;             /* 변수가 배열이 아닌 경우 */
+    if (objType == varId) return adr;            /* 변수가 배열이 아닌 경우 */
 
-    if (code.kind != '[') {                       /* 배열의 첨자가 없을 경우(첫항목을 임시로) */
-        return adr;
+    bool useArray = false;
+    int index = 0;
+    if (code.kind == '[') {
+        useArray = true;
+        int len = symPt->aryLen;
+        if (len == NOT_DEFINED_ARRAY)
+            errorExit(tecNEED_INIT_VARIABLE, "need initialized.");
+
+        if (!(objType == arrayId || objType == arrListId))
+            errorExit(tecINVALID_VARIABLE_TYPE, "not array");
+        
+        addDbgCode(Lbracket, 0, 0);
+        double d = getExpression('[', ']').getDbl(); 
+        if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
+
+        index = (int) d;
+        if (index < 0 || len <= index)
+            errorExit(tecEXCEED_ARRAY_LENGTH, "The index of the array is out of range.");
+        addDbgCode(Rbracket, 0, 0);
+
+        index *= symPt->frame;                   /* 배열 인덱스 (2차원) */
+
+        if (symPt->dtTyp == OBJECT_T) {
+            objType = objectId;
+            // symTbIdx 업데이트??
+            symTbIdx = symPt-> ref;
+        }
+        else objType = varId;                   /* 배열등의 요소임 */
     }
-    
-    objType = varId;                              /* 배열등의 요소임 */
 
-    int len = symPt->aryLen;
-    if (len == NOT_DEFINED_ARRAY)
-        errorExit(tecNEED_INIT_VARIABLE, "need initialized.");
+    if (code.kind == StructItem) {
+        if (objType != objectId) errorExit(tecINCORRECT_SYNTAX, "wrong StructItem");
+        objType = varId;                        /* Struct의 요소임 */
+        bool finded = false;
+        for(ItemTbl it : Itable) {
+            cout << endl << it.toFullString(true);
+            if (it.symId == symTbIdx && it.offset == code.symIdx) {
+                varTp = it.dtTyp;
+                index += it.offset;             /* struct item offset */
+                finded = true;
+                break;
+            }
+        }
+        if (!finded) errorExit(tecINVALID_NAME, "why not found?");
 
-    addDbgCode(Lbracket, 0, 0);
-    double d = getExpression('[', ']').getDbl(); 
-    if ((int)d != d) errorExit(tecNEED_UNSIGNED_INTEGER, "The index of array must be a positive integer.");
+        code = nextCode();
+    }
 
-    int index = (int) d;
-    if (index < 0 || len <= index)
-        errorExit(tecEXCEED_ARRAY_LENGTH, "The index of the array is out of range.");
-    removeDbgCode();
-    return adr + index;		                     /* 배열의 첨자만큼 더함 */
+    if (useArray) { removeDbgCode(); removeDbgCode(); }
+
+    return adr + index;		                    /* 배열의 첨자만큼 더함 */
 }
 
 /** 변수의 시작 주소를 반환 (배열인 경우는 0번째) */
@@ -1421,6 +1372,7 @@ MareExecuter::nextCode()
     short int jmpAdrs, tblIdx;
 
     if (*code_ptr == '\0') {                     /* 현재 line에서 코드가 끝난 경우 */
+        cout << endl << " ** EOF Line ** ";
         return CodeSet(EofLine);
     }
     kd = (TknKind)*UCHAR_P(code_ptr++);          /* 분석용 포인터를 다음 위치로 설정해서 코드 값을 읽음 */
@@ -1449,6 +1401,7 @@ MareExecuter::nextCode()
     case System:
     case GetProperty: 
     case SetProperty:
+    case StructItem:
     case Math:
     case Throws:
         tblIdx = *SHORT_P(code_ptr); code_ptr += SHORT_SIZE;
@@ -1472,14 +1425,26 @@ MareExecuter::setInitArray()
         for (int n=0; n < p->aryLen; n++)
             DynamicMem.set(memAdrs+n, VarObj(typ, 0));
     }
-    else {
-        string initVal;
-        if (typ == STR_T) initVal = "";
-        else errorExit(tecINVALID_TYPE, "The type cannot be used in an array.");
-
+    else if (typ == STR_T) {
+        string initVal = "";
         for (int n=0; n < p->aryLen; n++)
             DynamicMem.set(memAdrs+n, VarObj(typ, initVal));
     }
+    else if (typ == OBJECT_T) {
+        VarObj wkVal;
+        short obj_type = p->ref;
+        for (int n=0; n < p->aryLen; n++){
+            for (ItemTbl it : Itable) {
+                if (it.symId == obj_type) {
+                    wkVal.init(it.dtTyp);
+                    if (it.initTyp == STR_T) { wkVal.set(it.initStr); }
+                    else if (it.initTyp != NON_T) {wkVal.set(it.initVal); }
+                    DynamicMem.set(memAdrs + n * p->frame + it.offset, wkVal);
+                }
+            }
+        }
+    }
+    else errorExit(tecINVALID_TYPE, "The type cannot be used in an array.");
 }
 
 }

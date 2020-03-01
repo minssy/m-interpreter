@@ -28,6 +28,7 @@ private:
     // Parsing
     //Token token;                             /* 현재 처리중인 토큰 정보 (MareBase로 이동) */
     SymTbl tmpTb;                              /* 정보 저장용 임시 심볼 테이블 */
+    ItemTbl iTb;                               /* Struct item 정보 저장용 임시 테이블 */
     //int blkNest;                             /* 블록의 깊이 정보 (MareBase로 이동) */
     int localAdrs;                             /* 로컬 변수 주소 관리 */
     
@@ -48,6 +49,8 @@ private:
     void convert();
     void convertForRest();
     void convertVarAssign(bool literalOnly=false);
+    void convertIdent(short symidx, bool isGvar, bool objInArr);
+    void convertArrIdx();
     void convertBlockSet();
     void convertBlockSetIf();
     void convertBlock();
@@ -57,6 +60,8 @@ private:
     void setSymName(short const dtType);
     void setSymAryLen();
     void arrayListDeclare();
+    void structDeclare();
+    void objectDeclare();
     void funcDeclare();
     void backPatch(short line, short endLine);
 

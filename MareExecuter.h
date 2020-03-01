@@ -60,7 +60,7 @@ private:
     void setInitArray();
     void assignVariable(CodeSet const save, bool declare=false);
 
-    int  getMemAdrs(CodeSet const& cd, SymKind& objType);
+    int  getMemAdrs(CodeSet const& cd, SymKind& objType, DtType& varTp);
     VarObj getExpression(short kind1=0, short kind2=0);
     void expression(short kind1, short kind2);    
     void term(short n);

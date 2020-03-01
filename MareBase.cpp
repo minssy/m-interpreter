@@ -60,6 +60,7 @@ MareBase::initKindMap() {
     tmpKinds.insert(make_pair("int", VarInt));
     tmpKinds.insert(make_pair("string", VarStr));
     tmpKinds.insert(make_pair("datetime", VarDateTime));
+    tmpKinds.insert(make_pair("struct",   DeclareObj));
 
     tmpKinds.insert(make_pair("arrayList", ArrayList));
 
@@ -115,6 +116,8 @@ MareBase::initKindDBGMap() {
 
     kindDBG.insert(make_pair(DeclareVar, "declareVar"));
     kindDBG.insert(make_pair(DeclareArr, "declareArray"));
+    kindDBG.insert(make_pair(DeclareObj, "DeclareObj"));
+    kindDBG.insert(make_pair(VarStruct, "DeclareStruct"));
 
     kindDBG.insert(make_pair(DBPlusR, "++"));
     kindDBG.insert(make_pair(DBMinusR, "--"));
@@ -123,6 +126,7 @@ MareBase::initKindDBGMap() {
     kindDBG.insert(make_pair(Ident, "Ident"));
     kindDBG.insert(make_pair(GetProperty, "GetProperty"));
     kindDBG.insert(make_pair(SetProperty, "SetProperty"));
+    kindDBG.insert(make_pair(StructItem, "StructItem"));
 
     kindDBG.insert(make_pair(Expression, "Expression"));
     kindDBG.insert(make_pair(Version, "Version"));
@@ -154,6 +158,7 @@ MareBase::initKindNUMMap() {
     kindMapNum.insert(make_pair(System, 2));
     kindMapNum.insert(make_pair(GetProperty, 2));
     kindMapNum.insert(make_pair(SetProperty, 2));
+    kindMapNum.insert(make_pair(StructItem, 2));
     kindMapNum.insert(make_pair(Math, 2));
     kindMapNum.insert(make_pair(Throws, 2));
     
@@ -192,7 +197,8 @@ MareBase::kind2Str(CodeSet const& cd)
     case IntNum: return to_string((long)cd.numVal);
     case DblNum: return to_string(cd.numVal);
     case String: return string("\"") + cd.text + "\"";
-    case System: case GetProperty: case SetProperty: case Math:
+    case System: case Math:
+    case GetProperty: case SetProperty: case StructItem:
         return /*kind2Str(cd.kind) + "." +*/ mutil.getSubCmdStr(cd.symIdx);
     case Throws: 
         return transToken(cd.symIdx);
@@ -389,18 +395,29 @@ MareBase::printInfos(bool all) {
     }
     max =  Gtable.size();
     cout << endl << "  ************** Global Table (" << max << ")*********** ";
-    cout << endl << "id kind type adr len args frame : name";
+    cout << endl << " id kind type adr len args frame ref : name";
     for (i=0; i<max; i++){
         SymTbl tb = Gtable[i];
-        cout << endl << " " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
-             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame << "    :  " << tb.name;
+        cout << endl << "  " << i << " : " << tb.symKind << "   " << (int)tb.dtTyp << "   "
+             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame
+             << "    "  << tb.ref << "    :  " << tb.name;
     }
     max =  Ltable.size();
     cout << endl << "  ************** Local Table (" << max << ")************ "; 
     for (i=0; i<max; i++){
         SymTbl tb = Ltable[i];
-        cout << endl << " " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
-             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame << "    :  " << tb.name;
+        cout << endl << "  " << i << " : " << tb.symKind << "  " << (int)tb.dtTyp << "   "
+             << tb.adrs << "    " << tb.aryLen << "   " << tb.args << "   " << tb.frame
+             << "    "  << tb.ref << "    :  " << tb.name;
+    }
+    max =  Itable.size();
+    cout << endl << "  ************** Struct Items (" << max << ")************ "; 
+    cout << endl << " id type ownerId offset : name (= initValue)";
+    for (i=0; i<max; i++){
+        ItemTbl tb = Itable[i];
+        cout << endl << " " << i << " :  " << (int)tb.dtTyp << "   " << (int)tb.symId
+             << "       " << (int)tb.offset << "     : " << tb.name;
+        if (tb.initTyp != NON_T) cout << "   = " << tb.initVal << " or '" << tb.initStr << "'";
     }
 
     cout << endl << DynamicMem.to_string();

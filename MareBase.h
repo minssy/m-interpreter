@@ -21,6 +21,8 @@ public:
         intenalCode.clear();
         Gtable.clear();
         Ltable.clear();
+        Itable.clear();
+        ObjectMap.clear();
         nbrLITERAL.clear();
         strLITERAL.clear();
         dbgCode.clear();
@@ -50,12 +52,14 @@ public:
 protected: 
     MareUtil mutil;
 
-    vector<char*>  intenalCode;            /* 변환이 끝난, 내부 코드 저장 */
-    vector<SymTbl> Gtable;                 /* 전역 심볼 테이블 */
-    vector<SymTbl> Ltable;                 /* 로컬 심볼 테이블 */
-    MareMemory     DynamicMem;             /* 메모리 (변수 값 저장) */
-    vector<double> nbrLITERAL;             /* 수치 리터럴 저장 */
-    vector<string> strLITERAL;             /* 문자열 리터럴 저장 */
+    vector<char*>   intenalCode;           /* 변환이 끝난, 내부 코드 저장 */
+    vector<SymTbl>  Gtable;                /* Global Variable Symbol Table */
+    vector<SymTbl>  Ltable;                /* Local Variable Symbol Table */
+    vector<ItemTbl> Itable;                /* Struct Item Symbol Table */
+    map<string, int> ObjectMap;            /* Struct 키워드 맵 */
+    MareMemory      DynamicMem;            /* 메모리 (변수 값 저장) */
+    vector<double>  nbrLITERAL;            /* 수치 리터럴 저장 */
+    vector<string>  strLITERAL;            /* 문자열 리터럴 저장 */
 
     Token token;                           /* 현재 처리중인 토큰 (interperter) */
     CodeSet code;                          /* 현재 코드 셋 (InitExec, Executer) */
@@ -68,7 +72,7 @@ protected:
     short blkNest;                         /* 블록의 깊이 정보 */
 
     char codeBuf[LINE_SIZE+1], *codeBuf_p; /* 내부 코드 생성 작업용 */
-       
+
     static map<string, TknKind> kindMap;   /* 소스 코드와 내부 코드의 키워드 맵 */
     static const TknKind ctyp[256];        /* 문자 종류표 배열 */ 
 
@@ -109,39 +113,39 @@ protected:
 
     short countExps;
     inline void initDbgCode() {
-        //cout << endl << "***** reset dbg";
+        cout << endl << "***** reset dbg" << blkNest;
         countExps = 0;
         if (blkNest == 0) dbgCode.clear();
         else dbgCode.erase(dbgCode.begin() + blkNest, dbgCode.end());
-        //dbgdbg();
+        dbgdbg();
     }
     inline void initDbgCode(CodeSet cs) {
         initDbgCode();
         dbgCode.push_back(cs);
-        //cout << " new:" << kind2Str(cs.kind);
+        cout << " new:" << kind2Str(cs.kind);
     }
     inline void addDbgCode(CodeSet cs) {
-        //cout << endl << "***** add dbg"; 
+        cout << endl << "***** add dbg"; 
         dbgCode.push_back(cs);
-        //dbgdbg();
+        dbgdbg();
     }
     inline void addDbgCode(TknKind const tk, short const sym, short const jmp) {
         dbgCode.push_back(CodeSet(tk, sym, jmp));
     }
     inline void changeDbgCode(CodeSet cs) {
-        //cout << endl << "***** chg dbg";
+        cout << endl << "***** chg dbg";
         if (dbgCode.size() > 0) dbgCode.pop_back();
         dbgCode.push_back(cs);
-        //dbgdbg();
+        dbgdbg();
     }
     inline void changeDbgCode(TknKind const tk, short const sym, short const jmp) {
         changeDbgCode(CodeSet(tk, sym, jmp));
     }
     inline void removeDbgCode() {
-        //cout << endl << "***** del dbg"; 
+        cout << endl << "***** del dbg"; 
         if (dbgCode.size() > 0) dbgCode.pop_back();
         else cout << endl << "*******  remove dbg fail why?????  *** ";
-        //dbgdbg();
+        dbgdbg();
     }
     inline string getCodeSetStr(CodeSet& cs) {
         string s1 = kind2Str(cs.kind);
@@ -149,12 +153,12 @@ protected:
         if (s1 == s2) return s1;
         else return s1.append("(").append(s2).append(")");
     }
-    // inline void dbgdbg() {
-    //     cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
-    //     for(CodeSet c : dbgCode){
-    //         cout << kind2Str(c.kind) << " ";
-    //     }
-    // }
+    inline void dbgdbg() {
+        cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
+        for(CodeSet c : dbgCode){
+            cout << kind2Str(c.kind) << " ";
+        }
+    }
 
 private:
     static map<TknKind, string> kindMapDBG;  /* 소스 코드와 내부 코드의 키워드 맵 */

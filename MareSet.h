@@ -54,6 +54,7 @@ enum TknKind {
   VarInt, 
   VarStr, 
   VarDateTime, 
+  VarStruct,
   ArrayList,
   
   // 09 = 'HT(Horizontal Tab)', 10 = 'LF(Line Feed)', 13 = 'CR(Carriage Return)'
@@ -64,6 +65,7 @@ enum TknKind {
 
   DeclareVar=30,
   DeclareArr,
+  DeclareObj,
   Not='!',  DblQ='"', Mod='%', SglQ='\'', // 33, 34, 37, 39
   Lparen='(', Rparen=')',  // 40, 41
   Multi='*', Plus='+', Comma=',', Minus='-', Dot='.', Divi='/', // 42, 43, 44, 45, 46, 47
@@ -89,6 +91,7 @@ enum TknKind {
   System,
   GetProperty,
   SetProperty,
+  StructItem, 
   /* 여기부터 고정 값 */
   Version=242,
   True=243,
@@ -124,6 +127,7 @@ enum DtType {
     INT_T,
     STR_T,
     DATETIME_T,
+    OBJECT_T,
 };
 
 enum ExpressionType {
@@ -143,6 +147,7 @@ enum SymKind {
     /* symbol 등록중, varId, paraId로 부터 변경 */
     arrayId,
     arrListId,
+    objectId,
 };
 
 /** 심볼 테이블 구성 */
@@ -154,13 +159,14 @@ struct SymTbl
 
     unsigned short   adrs;    /* 변수/함수의 주소 */
     unsigned short   aryLen;  /* 배열길이, 0=단순변수 (func일 경우, 최소 인수개수) */
-    unsigned short   args;    /* 함수의 인수 개수 (vector의 버퍼 크기) */
-    unsigned short   frame;   /* 함수의 프래임 크기 */
+    unsigned short   args;    /* 함수의 인수 개수 (메모리 버퍼 크기) */
+    unsigned short   frame;   /* 함수의 프래임 크기 (struct item 갯수) */
+    unsigned short   ref;
 
     SymTbl() { clear(); }
     void clear() {
         name = ""; symKind=noId; dtTyp=NON_T; 
-        aryLen=0; args=0; adrs=0; frame=0; 
+        adrs=0; aryLen=0; args=0; frame=1; ref=0;
     }
 
     std::string toFullString(bool isHumanReadable=false) {
@@ -173,6 +179,7 @@ struct SymTbl
             else if (symKind == paraId) { str.append("Param "); }
             else if (symKind == arrayId) { str.append("Array "); }
             else if (symKind == arrListId) { str.append("ArrayList "); }
+            else if (symKind == objectId) { str.append("Struct "); }
             else if (symKind == noId) { str.append("none-symbol "); }
             else { str.append("Wrong-symble-type:").append(std::to_string((int)symKind)); return str; }
 
@@ -180,8 +187,10 @@ struct SymTbl
             else if (dtTyp == INT_T) { str.append("int "); }
             else if (dtTyp == STR_T) { str.append("string "); }
             else if (dtTyp == DATETIME_T) { str.append("datetime "); }
+            //else if (dtTyp == OBJECT_T) { str.append("struct "); }
             else if (dtTyp == NON_T) { str.append("void(none) "); }
-            else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+            //else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+            else { str.append("struct "); }
         }
         else {
             str.reserve(30);      // 메모리 확보
@@ -191,11 +200,61 @@ struct SymTbl
         str.append(" ").append(std::to_string(adrs));
         str.append(" ").append(std::to_string(aryLen));
 
-        //if (!isHumanReadable && symKind == funcId) { // func에서만 필요
-            str.append(" ").append(std::to_string(args));
-            str.append(" ").append(std::to_string(frame));
-        //}
+        str.append(" ").append(std::to_string(args));
+        str.append(" ").append(std::to_string(frame));
+
         str.append(" ").append(name);
+        return str;
+    }
+};
+
+struct ItemTbl 
+{
+    unsigned short   symId;   /* struct의 symtbl id */
+    unsigned short   offset;
+    std::string      name;    /* Item의 이름 */
+    DtType           dtTyp;   /* 타입 (NON_T, DBL_T,...) 변수타입 */
+    //VarObj           initObj;
+    DtType           initTyp;
+    double           initVal; /* 초기값 */
+    std::string      initStr; /* 초기값 */
+
+    ItemTbl() { clear(); }
+    void clear() {
+        name = ""; symId=0; offset=0; dtTyp=NON_T; //initObj.init(NON_T);
+        initTyp=NON_T; initVal=0; initStr=""; 
+    }
+
+    std::string toFullString(bool isHumanReadable=false) {
+        std::string str("");
+        if (isHumanReadable) {
+            str.reserve(40);      // 메모리 확보
+            if (dtTyp == DBL_T) { str.append("double "); }
+            else if (dtTyp == INT_T) { str.append("int "); }
+            else if (dtTyp == STR_T) { str.append("string "); }
+            else if (dtTyp == DATETIME_T) { str.append("datetime "); }
+            else if (dtTyp == NON_T) { str.append("void(none) "); }
+            else { str.append("Wrong-data-type:").append(std::to_string((int)dtTyp)); return str; }
+        }
+        else {
+            str.reserve(25);      // 메모리 확보
+            str.append(std::to_string((unsigned short)dtTyp));
+        }
+        str.append(" ").append(std::to_string(symId));
+        str.append(" ").append(std::to_string(offset));
+        str.append(" ").append(name);
+        str.append(" ").append(std::to_string(initTyp));
+        if (initTyp == NON_T) return str;
+
+        if (initTyp == STR_T)
+            str.append(" ").append(initStr);
+        else {
+            //std::string strVal = to_string_with_precision(initVal);
+            //to_string_simple(strVal);
+            //str.append(" ").append(strVal);
+            str.append(" ").append(std::to_string(initVal));
+        }
+
         return str;
     }
 };

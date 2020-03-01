@@ -166,6 +166,12 @@ MareInterpreter::convert()
     case ArrayList:
         arrayListDeclare();
         break;
+    case DeclareObj:                     /* struct 정의 */
+        structDeclare();
+        break;
+    case VarStruct:                      /* 정의된 struct로부터 변수 선언 */
+        objectDeclare();
+        break;
     case Func:
         chkDo = true;                    /* 블록 시작 체크를 위한 플래그 설정 */
         funcDeclare();                   /* 함수 선언 처리 */
@@ -262,7 +268,8 @@ MareInterpreter::chkKinds(Token const& tk) {
 
     switch (tk.kind) {
         case VarInt:     case VarDbl:    case VarStr:
-        case VarDateTime:
+        case VarDateTime:                case VarStruct:
+        case ArrayList:  case DeclareObj:
 
         case Func:       case End:
         case If:         case Elif:      case Else: 
@@ -293,12 +300,19 @@ MareInterpreter::convertForRest()
         switch (token.kind) {
 
         case Ident:                                              /* 함수 호출, 혹은 변수 */
+        {
             short tblIdx;
+            bool isGvar = false;
+            bool isVarInArr = false;
             if ((tblIdx=searchName(token.text, 'G')) != -1) {    /* Global symbol로 등록되어 있는지 확인 */
-                if (Gtable[tblIdx].symKind==funcId)
-                    setCode(Fcall, tblIdx); 
-                else
+                if (Gtable[tblIdx].symKind==funcId) {
+                    setCode(Fcall, tblIdx);
+                    break;
+                }
+                else {
                     setCode(Gvar, tblIdx);
+                    isGvar = true;
+                }
             }
             else if ((tblIdx=searchName(token.text, 'L')) == -1) /* Local symbol로 등록되어 있는지 확인 */
                 errorExit(tecNO_VARIABLE, "This token is not declared.");
@@ -306,13 +320,10 @@ MareInterpreter::convertForRest()
                 setCode(Lvar, tblIdx);
 
             token = nextTkn();
-            if (token.kind != Dot) continue;
-            setCode(Dot);
-            token = nextTkn();
-            TknKind Property;
-            tblIdx = mutil.getPropertyIdx(token.text, Property);
-            setCode(Property, tblIdx);
-            break;
+            if (token.kind == Lbracket)  { convertArrIdx(); isVarInArr=true; }
+            if (token.kind == Dot) convertIdent(tblIdx, isGvar, isVarInArr);
+            continue;
+        }
         case IntNum: 
         case DblNum:
             setCode(token.kind, setLITERAL(token.numVal));       /* 정수도 double형으로 저장 */
@@ -374,29 +385,33 @@ MareInterpreter::convertVarAssign(bool literalOnly)
         case Do:         case Close: 
             errorExit(tecINCORRECT_SYNTAX);
             break;
-        case Ident:                                                /* 함수 호출, 변수 */
+        case Ident:                                              /* 함수 호출, 혹은 변수 */
+        {
             if (literalOnly) errorExit(tecNEED_LITERAL_TYPE, 
                 "Only literal values are allowed to initialize function arguments.");
             short tblIdx;
-            if ((tblIdx=searchName(token.text, 'G')) != -1) {      /* Global symbol로 등록되어 있는지 확인 */
-                if (Gtable[tblIdx].symKind==funcId)
-                    setCode(Fcall, tblIdx); 
-                else
+            bool isGvar = false;
+            bool isVarInArr = false;
+            if ((tblIdx=searchName(token.text, 'G')) != -1) {    /* Global symbol로 등록되어 있는지 확인 */
+                if (Gtable[tblIdx].symKind==funcId) {
+                    setCode(Fcall, tblIdx);
+                    break;
+                }
+                else {
                     setCode(Gvar, tblIdx);
+                    isGvar = true;
+                }
             }
-            else if ((tblIdx=searchName(token.text, 'L')) == -1)   /* Local symbol로 등록되어 있는지 확인 */
+            else if ((tblIdx=searchName(token.text, 'L')) == -1) /* Local symbol로 등록되어 있는지 확인 */
                 errorExit(tecNO_VARIABLE, "This token is not declared.");
             else
                 setCode(Lvar, tblIdx);
 
             token = nextTkn();
-            if (token.kind != Dot) continue;
-            setCode(Dot);
-            token = nextTkn();
-            TknKind Property;
-            tblIdx = mutil.getPropertyIdx(token.text, Property);
-            setCode(Property, tblIdx);
-            break;
+            if (token.kind == Lbracket)  { convertArrIdx(); isVarInArr=true; }
+            if (token.kind == Dot) convertIdent(tblIdx, isGvar, isVarInArr);
+            continue;
+        }
         case IntNum:  case DblNum:                                 /* 정수도 double형으로 저장 */
             setCode(token.kind, setLITERAL(token.numVal));
             break;
@@ -429,6 +444,152 @@ MareInterpreter::convertVarAssign(bool literalOnly)
                 "Only literal values are allowed to initialize function arguments.");
             setCode(token.kind);
             if (token.kind == '(') { inBracket = true; ++bracketLevel; }
+            break;
+        }
+        token = nextTkn();
+    }
+}
+
+/** 변수의 속성 정보나 기타 등등 */
+void 
+MareInterpreter::convertIdent(short symidx, bool isGvar, bool objInArr) 
+{
+    JLOG(mutil.j_.trace()) << "convertIdent " << symidx << " " << isGvar << " " << objInArr;
+    //setCode(Dot);
+    token = nextTkn();
+    
+    // struct인 경우, 
+    // 일반 변수인 경우
+    // array or arraylist인 경우 -> struct인지? 일반 변수인지? 
+    bool isProperty = true;
+    SymKind sk = noId;
+    DtType dt = NON_T;
+    unsigned short targetSymIdx = symidx;
+    if (isGvar) {
+        sk = Gtable[symidx].symKind;
+        dt = Gtable[symidx].dtTyp;
+    }
+    else {
+        sk = Ltable[symidx].symKind;
+        dt = Ltable[symidx].dtTyp;
+    }
+    if (sk == objectId) {
+        isProperty = false;
+    }
+    else if (sk == arrayId || sk == arrListId) {
+        if (objInArr && dt == OBJECT_T) {
+            isProperty = false;
+            if (isGvar)
+                targetSymIdx = Gtable[symidx].ref;
+            else
+                targetSymIdx = Ltable[symidx].ref;
+        }
+    }
+
+    // struct object의 특정 변수인 경우
+    if (!isProperty) {
+        JLOG(mutil.j_.trace()) << " -- isStructItem: " << token.text;
+        // symidx 기반으로 어떤 item인지 찾아서 저장
+        short itemIdx = -1;
+        for (ItemTbl it : Itable) {
+            if (it.symId == targetSymIdx && it.name == token.text) {
+                itemIdx = it.offset;
+                break;
+            }
+        }
+        if (itemIdx ==-1) errorExit(tecINCORRECT_SYNTAX, "Not found");
+
+        //setCode(Dot);
+        setCode(StructItem, itemIdx);
+
+        // 다음에 변수의 속성 값이 있을 경우 처리
+        token = nextTkn();
+        if (token.kind == Dot) {
+            token = nextTkn();
+            isProperty = true;
+        }
+    }
+
+    if (isProperty) {
+        JLOG(mutil.j_.trace()) << " -- isProperty: " << token.text;
+        setCode(Dot);
+        TknKind Property;
+        short tblIdx = mutil.getPropertyIdx(token.text, Property);
+        setCode(Property, tblIdx);
+        token = nextTkn();
+    }
+}
+
+/** 배열의 인덱스관련 항목 처리 */
+void 
+MareInterpreter::convertArrIdx()
+{
+    JLOG(mutil.j_.trace()) << "convertArrIdx";
+    setCode(token.kind);
+    token = nextTkn();
+
+    for (;;) {
+        JLOG(mutil.j_.trace()) << " convertArrIdx() -token:" << kind2Str(token.kind);
+
+        if (token.kind == Rbracket) {
+            setCode(token.kind);
+            token = nextTkn();
+            return;
+        }
+
+        if (token.kind == EofLine) 
+            errorExit(tecINCORRECT_SYNTAX, "wrong brackets");
+
+        chkKinds(token);
+
+        switch (token.kind) {
+
+        case Ident:                                              /* 함수 호출, 혹은 변수 */
+        {
+            short tblIdx;
+            bool isGvar = false;
+            bool isVarInArr = false;
+            if ((tblIdx=searchName(token.text, 'G')) != -1) {    /* Global symbol로 등록되어 있는지 확인 */
+                if (Gtable[tblIdx].symKind==funcId) {
+                    setCode(Fcall, tblIdx);
+                    break;
+                }
+                else {
+                    setCode(Gvar, tblIdx);
+                    isGvar = true;
+                }
+            }
+            else if ((tblIdx=searchName(token.text, 'L')) == -1) /* Local symbol로 등록되어 있는지 확인 */
+                errorExit(tecNO_VARIABLE, "This token is not declared.");
+            else
+                setCode(Lvar, tblIdx);
+
+            token = nextTkn();
+            if (token.kind == Lbracket) { convertArrIdx(); isVarInArr=true; }
+            if (token.kind == Dot) convertIdent(tblIdx, isGvar, isVarInArr);
+            continue;
+        }
+        case IntNum: 
+        case DblNum:
+            setCode(token.kind, setLITERAL(token.numVal));       /* 정수도 double형으로 저장 */
+            break;
+        // case String:
+        //     setCode(token.kind, setLITERAL(token.text));
+        //     break;
+        case Math:
+        {
+            TknKind tp = token.kind;
+            token = nextTkn(); token = chkNextTkn(token, '.');
+            setCode(tp, mutil.getIdx(tp, token.text));
+            break;
+        }
+        case Plus:    case Minus:    case Multi:    case Divi:
+        case Mod: 
+        case DBPlus:  case DBMinus:  case DBPlusR:  case DBMinusR:
+            setCode(token.kind);
+            break;
+        default:
+            errorExit(tecINCORRECT_SYNTAX, "wrong brackets");
             break;
         }
         token = nextTkn();
@@ -559,7 +720,7 @@ MareInterpreter::setSymName(short const dtType)
     if (token.kind != Ident) 
         errorExit(tecINVALID_NAME, "Duplicated identifier: ", token.text);
     
-    if (dtType < Void || dtType > VarDateTime)
+    if (dtType < Void || dtType > VarStruct)
         errorExit(tecINCORRECT_SYNTAX, "Duplicated type identifier: ", kind2Str((TknKind)dtType));
 
     tmpTb.clear(); 
@@ -601,6 +762,15 @@ MareInterpreter::arrayListDeclare()
     token = nextTkn();
     token = chkNextTkn(token, Less);
     TknKind varType = token.kind;
+    int items = 0;
+    unsigned short objIdx = NOT_DEFINED_ARRAY;
+    if (varType == VarStruct) {
+        objIdx = token.numVal;
+        for(ItemTbl it : Itable) {
+            if (it.symId == objIdx) items++;
+        }
+        if (items == 0) errorExit(tecINCORRECT_SYNTAX, "un-defind struct");
+    }
     token = nextTkn();
     token = chkNextTkn(token, Great);
     JLOG(mutil.j_.trace()) << " * new arrayList type:" << kind2Str((TknKind)varType) << " " << token.text;
@@ -609,8 +779,110 @@ MareInterpreter::arrayListDeclare()
     //setSymAryLen();                        /* 길이 정보 설정 */
     tmpTb.aryLen = NOT_DEFINED_ARRAY;      /* 초기 배열 크기: 65535(== 0) */
     tmpTb.symKind = arrListId;
+    if (items > 0) tmpTb.frame = items;
+    if (objIdx != NOT_DEFINED_ARRAY) tmpTb.ref = objIdx;
+    
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
 
+    setCodeEofLine();
+}
+
+void 
+MareInterpreter::structDeclare()
+{
+    JLOG(mutil.j_.trace()) << "*** struct declear ***";
+    if (blkNest > 0 || funcDeclFlag) 
+        errorExit(tecINCORRECT_SYNTAX, "Struct declaration location is invalid.");
+
+    token = nextTkn();
+    int objectIdx = ObjectMap.size();
+    if (objectIdx > 0) {
+        auto m_iter = ObjectMap.find(token.text);
+        if (m_iter != ObjectMap.end())
+            errorExit(tecINVALID_NAME);
+    }
+    ObjectMap.insert(make_pair(token.text, objectIdx));
+    JLOG(mutil.j_.trace()) << " * new struct: "<< token.text << " " << objectIdx
+                         << " " << ObjectMap.size();
+
+    token = nextTkn();
+    setCodeEofLine(true);
+    if (token.kind == Do) { 
+        token = nextTkn();
+        setCodeEofLine();
+    }
+
+    short itemCnt = 0;
+    while (token.kind != Close) {
+        if (token.kind < VarDbl || token.kind > VarDateTime)
+            errorExit(tecINCORRECT_SYNTAX, "wrong struct item type");
+        iTb.clear();
+        iTb.symId = objectIdx;
+        iTb.dtTyp = (DtType)token.kind;
+        iTb.offset = itemCnt++;
+        token = nextTkn();
+        if (token.kind != Ident) 
+            errorExit(tecINVALID_NAME, "Duplicated identifier: ", token.text);
+        iTb.name = token.text;
+
+        token = nextTkn();
+        if (token.kind == '='){
+            token = nextTkn();
+            iTb.initTyp = iTb.dtTyp;
+            if (iTb.dtTyp == STR_T) { 
+                if (token.kind == String) iTb.initStr = token.text;
+                else errorExit(tecINVALID_ASSIGN, "Need string literal");
+            }
+            else { 
+                if (token.kind == IntNum || token.kind == DblNum )
+                    iTb.initVal = token.numVal;
+                else errorExit(tecINVALID_ASSIGN, "Need numeric literal");
+            }
+            token = nextTkn();
+        }
+        setCodeEofLine();
+
+        Itable.push_back(iTb);
+    }
+    token = nextTkn();
+    setCodeEofLine();
+
+    printInfos();
+}
+
+void 
+MareInterpreter::objectDeclare()
+{
+    // 아이템 수
+    unsigned short objIdx = token.numVal;
+    int items = 0;
+    for(ItemTbl it : Itable) {
+        if (it.symId == objIdx) items++;
+    }
+    token = nextTkn();
+    JLOG(mutil.j_.trace()) << " * new object:" << token.text << " " << objIdx;
+    chkVarName(token);                     /* 이름 검사 */
+    setSymName(VarStruct);                 /* 변수 등록에 사용될 SymTbl 셋팅 */
+    setSymAryLen();                        /* 길이 정보 설정 */
+    if (tmpTb.aryLen > 0) {
+        //tmpTb.symKind = arrayId;
+        //tmpTb.aryLen = ??;
+        tmpTb.frame = items;
+        //tmpTb.ref = objIdx;
+    }
+    else {
+        tmpTb.symKind = objectId;
+        tmpTb.aryLen = items;
+    }
+    tmpTb.ref = objIdx;
+
+    short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
+
+    setCode(VarStruct);
+    if (isLocalVarName(tmpTb.name, varId))
+        setCode(Lvar, tblNb);
+    else 
+        setCode(Gvar, tblNb);
     setCodeEofLine();
 }
 
@@ -824,8 +1096,14 @@ MareInterpreter::nextTkn()
     }
 
     unsigned char chk = (unsigned char)txt[0];
-    if (ctyp[chk] == Letter || ctyp[chk] == Doll) return Token(Ident, txt);
-    else errorExit(tecINCORRECT_SYNTAX, "wrong token:", txt);
+    if (ctyp[chk] == Letter || ctyp[chk] == Doll){
+        auto m_iter = ObjectMap.find(txt);
+        if (m_iter == ObjectMap.end())
+            return Token(Ident, txt);
+        else
+            return Token(VarStruct, m_iter->second);
+    }
+    errorExit(tecINCORRECT_SYNTAX, "wrong token:", txt);
     return Token(EofProg);
 }
 
@@ -919,11 +1197,12 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     mem_size = tb.aryLen;
     if (mem_size == 0) mem_size = 1;                           /* 단순 변수일 때 처리 */
     else if (mem_size == NOT_DEFINED_ARRAY) { 
-        mem_size = MEMORY_BACK_RESIZE;                         /* arrayList 셋팅 */
-        tb.args = MEMORY_BACK_RESIZE;
+        mem_size = MEMORY_BACK_RESIZE * tb.frame;              /* arrayList 셋팅 */
+        tb.args = mem_size;
     }
     else {
-        tb.args = tb.aryLen;                                   /* fixed array 셋팅 */
+        mem_size = tb.aryLen * tb.frame;                       /* fixed array 셋팅 */
+        tb.args = mem_size;
     }
     if (kind == funcId && tb.name[0] == '$')                   /* 함수인 경우, '$' 사용불가 */
         errorExit(tecINVALID_NAME, "Don't allow '$' except variable name: ", tb.name);
@@ -935,8 +1214,10 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
     if (n != -1) errorExit(tecINVALID_NAME, "Duplicated name: ", tb.name);
 
     // 주소 설정
-    if (kind == funcId) 
+    if (kind == funcId) {
         tb.adrs = getLineNo();                                 /* 함수 시작 행 정보 저장 */
+        tb.frame = 0;
+    }
     else {
         if (isLocal) {                                         /* 로컬 변수 처리 */
             tb.adrs = localAdrs; 

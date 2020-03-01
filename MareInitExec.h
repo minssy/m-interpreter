@@ -25,7 +25,7 @@ protected:
 private:
     void assignVariable(bool strict=false);
     void setProperty_syntax(CodeSet const& varCode, SymKind sk);
-    int  getMemAdrs(CodeSet const& cd, SymKind& objType);  // override function
+    int  getMemAdrs(CodeSet const& cd, SymKind& objType, DtType& varTp);  // override function
 
     VarObj getExpression_syntax(short kind1=0, short kind2=0);
     void   expression_syntax(short kind1, short kind2);
