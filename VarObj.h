@@ -76,8 +76,8 @@ private:
      * type 설정이 안된 경우에는 type까지 적용
      */
     void set(VarObj const& nobj) {
-        //cout << endl << "set:" << nobj.type << "-" << nobj.txt << nobj.val;
-        //cout << endl << "ori:" << type << "-" << txt << val;
+        cout << endl << "set:" << nobj.type << "->" << nobj.txt << " " << nobj.val;
+        cout << endl << "ori:" << type << "->" << txt << " " << val;
         if (nobj.type == NON_T) { 
             type = NON_T; txt=""; val=0;
             return;       

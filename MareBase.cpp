@@ -116,7 +116,8 @@ MareBase::initKindDBGMap() {
 
     kindDBG.insert(make_pair(DeclareVar, "declareVar"));
     kindDBG.insert(make_pair(DeclareArr, "declareArray"));
-    kindDBG.insert(make_pair(VarStruct, "object"));
+    kindDBG.insert(make_pair(DeclareObj, "DeclareObj"));
+    kindDBG.insert(make_pair(VarStruct, "DeclareStruct"));
 
     kindDBG.insert(make_pair(DBPlusR, "++"));
     kindDBG.insert(make_pair(DBMinusR, "--"));

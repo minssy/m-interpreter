@@ -799,6 +799,9 @@ void
 MareInterpreter::arrayListDeclare()
 {
     JLOG(mutil.j_.trace()) << "*** arrayList declear ***";
+    if (blkNest > 0 || funcDeclFlag) 
+        errorExit(tecINCORRECT_SYNTAX, "Struct declaration location is invalid.");
+
     token = nextTkn();
     token = chkNextTkn(token, Less);
     TknKind varType = token.kind;
@@ -854,6 +857,8 @@ MareInterpreter::structDeclare()
 
     short itemCnt = 0;
     while (token.kind != Close) {
+        if (token.kind < VarDbl || token.kind > VarDateTime)
+            errorExit(tecINCORRECT_SYNTAX, "wrong struct item type");
         iTb.clear();
         iTb.symId = objectIdx;
         iTb.dtTyp = (DtType)token.kind;
@@ -872,7 +877,7 @@ MareInterpreter::structDeclare()
                 else errorExit(tecINVALID_ASSIGN, "Need string literal");
             }
             else { 
-                if (token.kind == IntNum || token.kind == DblNum)
+                if (token.kind == IntNum || token.kind == DblNum )
                     iTb.initVal = token.numVal;
                 else errorExit(tecINVALID_ASSIGN, "Need numeric literal");
             }
@@ -916,6 +921,11 @@ MareInterpreter::objectDeclare()
 
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
 
+    setCode(VarStruct);
+    if (isLocalVarName(tmpTb.name, varId))
+        setCode(Lvar, tblNb);
+    else 
+        setCode(Gvar, tblNb);
     setCodeEofLine();
 }
 
@@ -1234,7 +1244,8 @@ MareInterpreter::enter(SymTbl& tb, SymKind kind)
         tb.args = mem_size;
     }
     else {
-        tb.args = tb.aryLen * tb.frame;                        /* fixed array 셋팅 */
+        mem_size = tb.aryLen * tb.frame;                       /* fixed array 셋팅 */
+        tb.args = mem_size;
     }
     if (kind == funcId && tb.name[0] == '$')                   /* 함수인 경우, '$' 사용불가 */
         errorExit(tecINVALID_NAME, "Don't allow '$' except variable name: ", tb.name);

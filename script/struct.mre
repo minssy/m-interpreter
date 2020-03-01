@@ -25,6 +25,7 @@ pointSet pt1
 pt1.x = 1
 pt1.y = 2
 pt1.z = 3
+pt1.name = "one"
 
 point2Set pt2
 
@@ -35,13 +36,20 @@ pts[0].y = 5
 pts[0].z = 6
 pts[0].name = "zero"
 
-int lth = pts[0].name.size()
+log("0..", pt1.name)
+
+int lth1 = pt1.name.size()
+
+log("1..", pts[0].name)
+
+int lth2 = pts[0].name.size()
+
 
 pts[1] = pt1
 
-pts[3].x = pt2.x
-pts[3].y = pt2.y
-pts[3].z = 30
+pts[2].x = pt2.x
+pts[2].y = pt2.y
+pts[2].z = 30
 
 pointSet pt3
 

@@ -93,6 +93,8 @@ MareInitExec::chkSyntax()
                 removeDbgCode();
             } while (true);
             break;
+        case VarStruct:
+            break;
         case Gvar: 
         case Lvar:                                            /* 대입문 처리 */
             assignVariable();
@@ -243,7 +245,12 @@ MareInitExec::assignVariable(bool strict)
     if (varSymType == objectId && code.kind == '=') {
         // struct가 같은지 확인...
         code = nextCode(); 
+        short obj_type = symTablePt(save)->ref;
+        if (obj_type != symTablePt(code)->ref)
+            errorExit(tecINVALID_ASSIGN, "different struct object");
         getMemAdrs(code, varSymType, dt);
+        if (varSymType != objectId) errorExit(tecINVALID_ASSIGN, "need struct object");
+        if (code.kind != EofLine) errorExit(tecNEED_LINE_END, "assign struct object");
     }
     else if (varSymType == varId) {
         cout << endl << " assignType:" << kind2Str(code);
@@ -277,6 +284,7 @@ MareInitExec::assignVariable(bool strict)
 void
 MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
 {
+    DtType objtp = symTablePt(varCode)->dtTyp;
     code = nextCode(); 
     addDbgCode(code);
     if (code.kind != SetProperty)
@@ -284,37 +292,30 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
  
     if (varCode.kind != Gvar) 
         errorExit(tecINCORRECT_SYNTAX, "global variable only");
+
+    if (objtp == OBJECT_T) 
+        errorExit(tecINCORRECT_SYNTAX, "under construction for struct object!!");
         
+
     if (code.symIdx == Resize) {
         if (sk != arrayId) errorExit(tecINCORRECT_SYNTAX, "array only");
         code = nextCode();
         double nsz = getExpression_syntax('(', ')').getDbl();
         if (nsz < 1) errorExit(tecNEED_UNSIGNED_INTEGER);
         if (nsz > MAX_ARRAY) errorExit(tecEXCEED_ARRAY_LENGTH);
+        return;
     }
-    else if (code.symIdx == Add) {
-        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+
+    if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+    short arraySetPropertyType = code.symIdx;
+    if (arraySetPropertyType == Clear) {
+        
         code = nextCode();
-        returnValue.init(symTablePt(varCode)->dtTyp);
-        returnValue = getExpression_syntax('(', 0);
-        if (code.kind == ',') {
-            getExpression_syntax(',', 0).getDbl();
-        }
+        code = chkNextCode(code, '(');
         code = chkNextCode(code, ')');
     }
-    else if (code.symIdx == Insert) {
-        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
-        code = nextCode();
-        returnValue.init(symTablePt(varCode)->dtTyp);
-        returnValue = getExpression_syntax('(', ',');
-        getExpression_syntax(0, 0).getDbl();
-        if (code.kind == ',') {
-            getExpression_syntax(',', 0).getDbl();
-        }
-        code = chkNextCode(code, ')');
-    }
-    else if (code.symIdx == Remove) {
-        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+    else if (arraySetPropertyType == Remove) {
+
         code = nextCode();
         getExpression_syntax('(', 0).getDbl();
         if (code.kind == ',') {
@@ -322,13 +323,36 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
         }
         code = chkNextCode(code, ')');
     }
-    else if (code.symIdx == Clear) {
-        if (sk != arrListId) errorExit(tecINCORRECT_SYNTAX, "arrayList only");
+    else { 
+
         code = nextCode();
-        code = chkNextCode(code, '(');
-        code = chkNextCode(code, ')');
+        if (objtp == OBJECT_T) {
+            SymKind varSymType1;
+            DtType dt1;
+            getMemAdrs(code, varSymType1, dt1);
+            if (varSymType1 != objectId)
+                errorExit(tecINCORRECT_SYNTAX, "need object");
+        }
+        else {
+            returnValue.init(objtp);
+            returnValue = getExpression_syntax('(', 0);
+        }
+
+        if (arraySetPropertyType == Add) {
+            if (code.kind == ',') {
+                getExpression_syntax(',', 0).getDbl();
+            }
+            code = chkNextCode(code, ')');
+        }
+        else if (arraySetPropertyType == Insert) {
+            getExpression_syntax(',', 0).getDbl();
+            if (code.kind == ',') {
+                getExpression_syntax(',', 0).getDbl();
+            }
+            code = chkNextCode(code, ')');
+        }
+        else errorExit(tecINCORRECT_SYNTAX, "undifined property type");
     }
-    else errorExit(tecINCORRECT_SYNTAX);
 }
 
 /** 
