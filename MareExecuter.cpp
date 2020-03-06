@@ -471,13 +471,32 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         int osz = symPt->aryLen;
         diffLength = nsz - osz;
         if (diffLength != 0) {
+            diffLength *= symPt->frame; // struct object 고려
             if (diffLength > 0) { // insert
                 // symtbl update
                 updateSymTbl(varAdrs, diffLength, true);
-                VarObj objTmp;
-                objTmp.init(symPt->dtTyp);
-                // memory update
-                DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
+                if (symPt->dtTyp == OBJECT_T) {
+                    VarObj tmplst[symPt->frame];
+                    VarObj wkVal;
+                    short obj_type = symPt->ref;
+                    for (int n=0; n < symPt->aryLen; n++){
+                        for (ItemTbl it : Itable) {
+                            if (it.symId == obj_type) {
+                                wkVal.init(it.dtTyp);
+                                if (it.initTyp == STR_T) { wkVal.set(it.initStr); }
+                                else if (it.initTyp != NON_T) {wkVal.set(it.initVal); }
+                                tmplst[it.offset] = wkVal;
+                            }
+                        }
+                    }
+                    // memory update
+                    DynamicMem.updateExpand(varAdrs + osz, diffLength, tmplst, symPt->frame);
+                }
+                else {
+                    VarObj objTmp; objTmp.init(symPt->dtTyp);
+                    // memory update
+                    DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
+                }
             }
             else { // erase
                 // symtbl update

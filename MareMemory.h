@@ -82,7 +82,7 @@ public:
     }
     /** 배열의 크기가 변경(bigger)될 때 (adrs에 addSize만큼 dt를 추가) */
     void updateExpand(int adrs, int addSize, VarObj dt) {
-        if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        if ((adrs+addSize) >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         vector<VarObj> mem_temp;
 
         int iEnd = mem_size + addSize;
@@ -97,6 +97,32 @@ public:
             }
             else {
                 mem_temp.push_back(mem[k-addSize]);
+            }
+        }
+        mem.clear();
+        mem.assign(mem_temp.begin(), mem_temp.end());
+
+        //mem.insert(it + adrs, addSize, dt);// 복사중 에러
+        mem_size += addSize;
+    }
+    void updateExpand(int adrs, int addSize, VarObj* dt, int lth) {
+        if ((adrs+addSize) >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        vector<VarObj> mem_temp;
+
+        int iEnd = mem_size + addSize;
+        int step = adrs + addSize;
+        mem_temp.reserve(iEnd + 20);
+        for (int k=0; k<iEnd; k++) {
+            for (int j=0; j<lth; j++) {
+                if (k < adrs) {
+                    mem_temp.push_back(mem[k]);
+                }
+                else if (k < step) {
+                    mem_temp.push_back(dt[j]);
+                }
+                else {
+                    mem_temp.push_back(mem[k-addSize]);
+                }
             }
         }
         mem.clear();
