@@ -113,16 +113,17 @@ public:
         int step = adrs + addSize;
         mem_temp.reserve(iEnd + 20);
         for (int k=0; k<iEnd; k++) {
-            for (int j=0; j<lth; j++) {
-                if (k < adrs) {
-                    mem_temp.push_back(mem[k]);
-                }
-                else if (k < step) {
+            if (k < adrs) {
+                mem_temp.push_back(mem[k]);
+            }
+            else if (k < step) {
+                for (int j=0; j<lth; j++) {
                     mem_temp.push_back(dt[j]);
+                    k++;
                 }
-                else {
-                    mem_temp.push_back(mem[k-addSize]);
-                }
+            }
+            else {
+                mem_temp.push_back(mem[k-addSize]);
             }
         }
         mem.clear();
@@ -141,6 +142,9 @@ public:
             mem[k].init(NON_T);
             mem[k] = mem[k + subSize];
         }
+        for (int k=iEnd; k<mem_size; k++) 
+            mem[k].init(NON_T);
+
         mem.erase(it + iEnd);
         mem_size -= subSize;
     }

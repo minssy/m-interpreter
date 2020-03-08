@@ -69,7 +69,7 @@ private:
     short setParams(vector<VarObj>& vs, short numOfParams);
     
     void setPropertyRun(CodeSet const& varCode, SymKind sk);
-    void updateSymTbl(int adrs, int diff, bool isFixedArray=false);   
+    void updateSymTbl(int adrs, int diff, int frameSz, bool isFixedArray=false);   
 };
 
 }

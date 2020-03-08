@@ -233,7 +233,7 @@ MareInitExec::assignVariable(bool strict)
     DtType dt;
     getMemAdrs(code, varSymType, dt);                        /* 좌변 주소 확인 */
     if (code.kind == '.') {
-        if (strict) errorExit(tecNEED_VARIABLE_TYPE);
+        if (strict) errorExit(tecNEED_VARIABLE_TYPE, "for statment - index expression");
         return setProperty_syntax(save, varSymType);
     }
     cout << endl << " var:" << varSymType << " " << dt;
@@ -293,8 +293,8 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
     if (varCode.kind != Gvar) 
         errorExit(tecINCORRECT_SYNTAX, "global variable only");
 
-    if (objtp == OBJECT_T) 
-        errorExit(tecINCORRECT_SYNTAX, "under construction for struct object!!");
+    // if (objtp == OBJECT_T) 
+    //     errorExit(tecINCORRECT_SYNTAX, "under construction for struct object!!");
         
 
     if (code.symIdx == Resize) {
@@ -327,6 +327,7 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
 
         code = nextCode();
         if (objtp == OBJECT_T) {
+            code = nextCode();
             SymKind varSymType1;
             DtType dt1;
             getMemAdrs(code, varSymType1, dt1);
@@ -545,7 +546,7 @@ MareInitExec::factor_syntax()
             code = chkNextCode(code, ')');
             removeDbgCode();
         }
-        else if (varSymTypeTmp != varId) {
+        else if (varSymTypeTmp != varId && varSymTypeTmp != objectId) {
             errorExit(tecNEED_VARIABLE_TYPE, "Invalid array type");
         }
         else {

@@ -148,6 +148,11 @@ public:
             val = floor(dt);
             return;
         }
+        if (type == OBJECT_T) { 
+            chkDateTimeValue(dt);
+            val = floor(dt);
+            return;
+        }
         else throw tecINVALID_ASSIGN;
     }
 
@@ -173,11 +178,18 @@ public:
         return val;
     }
 
+    int getObjAdrs() {
+        if (type != OBJECT_T)
+            throw tecNEED_NUMBER_TYPE;
+        return (int)val;
+    }
+
     /** 객체의 값을 문자열로 반환 */
     string toStr(bool forClient=false) {
         switch(type){
             case INT_T:
             case DATETIME_T:
+            case OBJECT_T:
                 return to_string((long)val);
             case DBL_T:
             {
@@ -602,6 +614,8 @@ public:
                 return "STR_T";
             case DATETIME_T:
                 return "DATETIME_T";
+            case OBJECT_T:
+                return "OBJECT_T";
             default:
                 throw tecINVALID_TYPE;
         }

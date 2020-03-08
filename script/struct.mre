@@ -40,7 +40,7 @@ log("0..", pt1.name)
 
 int lth1 = pt1.name.size()
 
-log("1..", pts[0].name)
+log("1..", pts[0].name, " ", lth1)
 
 int lth2 = pts[0].name.size()
 
@@ -55,7 +55,12 @@ pointSet pt3
 
 pt3 = pts[0]
 
-arrayList<pointSet> ptlist
+//pts.resize(2) // 버그 있음
 
-//ptlist.add(pt1) // 아직임...
 
+//arrayList<pointSet> ptlist
+
+//ptlist.add(pt1)
+//ptlist.add(pts[2])
+
+pts.resize(5)  // 축소는 정상동작하나 확대시 에러발생

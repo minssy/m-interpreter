@@ -907,16 +907,19 @@ MareInterpreter::objectDeclare()
     chkVarName(token);                     /* 이름 검사 */
     setSymName(VarStruct);                 /* 변수 등록에 사용될 SymTbl 셋팅 */
     setSymAryLen();                        /* 길이 정보 설정 */
-    if (tmpTb.aryLen > 0) {
-        //tmpTb.symKind = arrayId;
-        //tmpTb.aryLen = ??;
+    /*if (tmpTb.aryLen > 0) {
         tmpTb.frame = items;
-        //tmpTb.ref = objIdx;
     }
     else {
         tmpTb.symKind = objectId;
         tmpTb.aryLen = items;
+    }*/
+    if (tmpTb.aryLen == 0) {
+        tmpTb.symKind = objectId;
+        tmpTb.aryLen = 1;
     }
+    tmpTb.frame = items;
+
     tmpTb.ref = objIdx;
 
     short tblNb = enter(tmpTb, varId);     /* 변수등록 (주소도 등록) */
