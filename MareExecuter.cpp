@@ -518,7 +518,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
     case Add: 
     {
         code = nextCode();
-        VarObj vo = getExpression('(', 0); // 이 값이 struct object일 경우는??
+        VarObj vo = getExpression('(', 0);
         if (code.kind == ',') {
             diffLength = getExpression(',', 0).getDbl();
             if (diffLength < 1)
@@ -570,7 +570,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         isUpdatedSymbols = true;
         break;
     }
-    case Insert: 
+    case Insert: // 작업필요
     {
         code = nextCode();
         VarObj vo = getExpression('(', 0);
@@ -620,7 +620,8 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
             errorExit(tecEXCEED_ARRAY_LENGTH, symPt->name, " has no item.");
         if ((idx+diffLength) > osz) errorExit(tecEXCEED_ARRAY_LENGTH);
         symPt->aryLen = osz - diffLength;
-        DynamicMem.updateRemove(varAdrs + idx, diffLength, varAdrs + bsz - 1);
+        diffLength *= symPt->frame;
+        DynamicMem.updateRemove(varAdrs + (idx*symPt->frame), diffLength, varAdrs + bsz - 1);
         isUpdatedSymbols = true;
         break;
     }
@@ -631,7 +632,8 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         int bsz = symPt->args;
         if (osz != 0 && osz != NOT_DEFINED_ARRAY)
         {
-            diffLength = bsz - MEMORY_BACK_RESIZE;
+            short bufSize = MEMORY_BACK_RESIZE * symPt->frame;
+            diffLength = bsz - bufSize;
             if (diffLength > 0) {
                 // symtbl update
                 updateSymTbl(varAdrs, (diffLength * -1), symPt->frame, false);
@@ -640,7 +642,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
             }
             symPt->aryLen = 0;
             VarObj vo;
-            for (short idx=0; idx<MEMORY_BACK_RESIZE; idx++)
+            for (short idx=0; idx<bufSize; idx++)
                 DynamicMem.set(varAdrs + idx, vo);
             isUpdatedSymbols = true;
         }
