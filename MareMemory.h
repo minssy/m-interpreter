@@ -108,13 +108,13 @@ public:
     void updateExpand(int adrs, int addSize, VarObj* dt, int lth) {
         if ((adrs+addSize) >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         vector<VarObj> mem_temp;
-
+        
         int iEnd = mem_size + addSize;
         int step = adrs + addSize;
         mem_temp.reserve(iEnd + 20);
-        for (int k=0; k<iEnd; k++) {
+        for (int k=0; k<iEnd; ) {
             if (k < adrs) {
-                mem_temp.push_back(mem[k]);
+                mem_temp.push_back(mem[k++]);
             }
             else if (k < step) {
                 for (int j=0; j<lth; j++) {
@@ -124,6 +124,7 @@ public:
             }
             else {
                 mem_temp.push_back(mem[k-addSize]);
+                k++;
             }
         }
         mem.clear();
