@@ -44,23 +44,35 @@ log("1..", pts[0].name, " ", lth1)
 
 int lth2 = pts[0].name.size()
 
-
 pts[1] = pt1
 
 pts[2].x = pt2.x
 pts[2].y = pt2.y
 pts[2].z = 30
 
+int fidx = pts.indexOf("one")
+log("idx1: ", fidx)
+
+fidx = pts.indexOf(pt2.y)
+log("idx2: ", fidx)
+
 pointSet pt3
 
 pt3 = pts[0]
 
-//pts.resize(2) // 버그 있음
+//pts.resize(2)
+pts.resize(5)
 
+arrayList<pointSet> ptlist
 
-//arrayList<pointSet> ptlist
+ptlist.add(pt1)
+ptlist.add(pts[2], 3)
+ptlist.add(pts[0])
 
-//ptlist.add(pt1)
-//ptlist.add(pts[2])
+//ptlist.remove(1)
 
-pts.resize(5)  // 축소는 정상동작하나 확대시 에러발생
+ptlist.add(pts[2])
+
+//ptlist.clear()
+
+ptlist.insert(pts[1], 1)

@@ -514,8 +514,12 @@ MareInitExec::factor_syntax()
                 else if (code.symIdx == IndexOf) { 
                     code = nextCode(); code = chkNextCode(code, '(');
                     DtType tmpTp2 = getExpression_syntax(0, 0).getType();
-                    if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
-                        errorExit(tecINVALID_VARIABLE_TYPE, "mismatch type");
+                    if (tmpTp2 == OBJECT_T)
+                        errorExit(tecINVALID_VARIABLE_TYPE, "cannot use obj type");
+                    else if (tmpTp == OBJECT_T) { }
+                    else if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
+                        errorExit(tecINVALID_VARIABLE_TYPE, "mismatch var type");
+
                     if (code.kind == ',') { // 검색 시작 위치
                         code = nextCode();
                         tmpTp2 = getExpression_syntax(0, 0).getType();

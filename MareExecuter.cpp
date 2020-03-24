@@ -527,7 +527,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         code = nextCode();
         // 타입 검사 필요함.
         int osz = symPt->aryLen;
-        int bsz = symPt->args;
+        int bsz = symPt->args / symPt->frame;
         if (osz == NOT_DEFINED_ARRAY) osz = 0;
         if ((osz + diffLength) >= bsz) {
             // 메모리 여유분 확보함.
@@ -581,8 +581,9 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
                 errorExit(tecNEED_UNSIGNED_INTEGER);
         }
         code = nextCode();
+
         int osz = symPt->aryLen;
-        int bsz = symPt->args;
+        int bsz = symPt->args / symPt->frame;
         if (osz == NOT_DEFINED_ARRAY) osz = 0;
         if ((osz + diffLength) >= bsz) {
             cout << endl << " && insert expand &&";
@@ -591,16 +592,24 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
                 kk = (kk / MEMORY_BACK_RESIZE) + 1;
             }
             else kk = 1;
+            kk *= symPt->frame; // struct object까지 고려함.
             updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, symPt->frame, false);
             VarObj objTmp;
-            objTmp.init(symPt->dtTyp);
-            DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-            bsz = symPt->args;
+            if (symPt->dtTyp == OBJECT_T) objTmp.init(NON_T);
+            else objTmp.init(symPt->dtTyp);
+            //DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
+            DynamicMem.updateExpand(varAdrs + (osz * symPt->frame), MEMORY_BACK_RESIZE * kk, objTmp);
+            bsz = symPt->args / symPt->frame;
         }
         cout << endl << " && insert1 && " << varAdrs << " " << osz;
         symPt->aryLen = (osz + diffLength);
         cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
-        DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
+        if (vo.getType() == OBJECT_T) {
+            errorExit(tecCONTRACT_SYNTAX_ERROR, "under construction!!");
+        }
+        else {
+            DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
+        }
         isUpdatedSymbols = true;
         break;
     }
@@ -898,7 +907,7 @@ MareExecuter::factor()
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");
             }
             else { // array or arrayList
-                unsigned short tmpSz = symPt->aryLen;
+                int tmpSz = symPt->aryLen;
                 if (code.symIdx == Size) {
                     if (tmpSz == NOT_DEFINED_ARRAY) tmpSz = 0;
                     mstk.push(INT_T, tmpSz);
@@ -921,11 +930,27 @@ MareExecuter::factor()
                     }
                     code = nextCode();             /* ')' skip */
                     bool isFind = false;
-                    for (int adr=startIdx; adr<tmpSz; adr++) {
-                        if ((compObj == DynamicMem.get(adr + varAdrs)).getDbl()){
-                            isFind = true;
-                            mstk.push(INT_T, adr);
-                            break;
+                    if (tmpTp == OBJECT_T) {
+                        tmpSz *= symPt->frame;
+                        DtType matchType = compObj.getType();
+                        for (int idx=startIdx; idx<tmpSz; idx++) {
+                            VarObj memVar = DynamicMem.get(idx + varAdrs);
+                            if (matchType == memVar.getType()) {
+                                if ((compObj == memVar).getDbl()){
+                                    isFind = true;
+                                    mstk.push(INT_T, idx/symPt->frame);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        for (int idx=startIdx; idx<tmpSz; idx++) {
+                            if ((compObj == DynamicMem.get(idx + varAdrs)).getDbl()){
+                                isFind = true;
+                                mstk.push(INT_T, idx);
+                                break;
+                            }
                         }
                     }
                     if (!isFind) mstk.push(INT_T, -1);
