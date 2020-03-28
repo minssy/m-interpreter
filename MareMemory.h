@@ -172,6 +172,31 @@ public:
         }
     }
     /** 배열의 데이터만 삭제 (capacity 유지) */
+    void updateInsert(int adrs, int subSize, int lastArrayIdx, VarObj* dt, int lth) {
+        if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        if (subSize < 1) throw tecNEED_UNSIGNED_INTEGER;
+        vector<VarObj>::iterator it = mem.begin();
+        cout << endl << " -updateInsert " << adrs << " " << subSize << " " << lastArrayIdx;
+        lastArrayIdx -= subSize;
+        int k=0;
+        for (k=lastArrayIdx; k>=adrs; k--) {
+            cout << endl << " -updateInsert -idx:" << (k+subSize);
+            mem[k+subSize].init(NON_T);
+            if (mem[k].getType() != NON_T){
+                mem[k+subSize] = mem[k];
+                cout << " -> " << mem[k+subSize].toFullString(true);
+            }
+        }
+        for (int j=1; j<=subSize; ) {
+            cout << endl << " -InsertVar -idx:" << (k+j);
+            for (int m=0; m<lth; m++) {
+                mem[k+j].init(NON_T);
+                mem[k+j] = dt[m];
+                j++;
+            }
+        }
+    }
+    /** 배열의 데이터만 삭제 (capacity 유지) */
     void updateRemove(int adrs, int subSize, int lastArrayIdx) {
         if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         if (subSize < 1) throw tecNEED_UNSIGNED_INTEGER;
