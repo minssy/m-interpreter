@@ -172,7 +172,7 @@ public:
         }
     }
     /** 배열의 데이터만 삭제 (capacity 유지) */
-    void updateInsert(int adrs, int subSize, int lastArrayIdx, VarObj* dt, int lth) {
+    void updateInsert(int adrs, int subSize, int lastArrayIdx, std::vector<VarObj>& dt, int lth) {
         if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         if (subSize < 1) throw tecNEED_UNSIGNED_INTEGER;
         vector<VarObj>::iterator it = mem.begin();
@@ -188,7 +188,7 @@ public:
             }
         }
         for (int j=1; j<=subSize; ) {
-            cout << endl << " -InsertVar -idx:" << (k+j);
+            cout << endl << " -InsertObjVar -idx:" << (k+j);
             for (int m=0; m<lth; m++) {
                 mem[k+j].init(NON_T);
                 mem[k+j] = dt[m];

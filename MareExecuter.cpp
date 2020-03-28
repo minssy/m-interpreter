@@ -573,10 +573,11 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
     case Insert: // 작업필요
     {
         code = nextCode();
-        //VarObj vo = getExpression('(', 0);
-        code = nextCode();
-        CodeSet save = code = nextCode();
-        VarObj vo = getExpression(0, 0);
+        VarObj vo = getExpression('(', 0);
+        // code = nextCode();
+        // CodeSet save = code = nextCode();
+        // VarObj vo = getExpression(0, 0);
+
         int idx = getExpression(',', 0).getDbl();
         if (code.kind == ',') {
             diffLength = getExpression(',', 0).getDbl();
@@ -608,18 +609,21 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         symPt->aryLen = (osz + diffLength);
         cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
         if (vo.getType() == OBJECT_T) {
-            errorExit(tecCONTRACT_SYNTAX_ERROR, "under construction!!");
+            cout << endl << " ???  object?? add ";
+            if (tmpStructObj.size() == 0) errorExit(tecINCORRECT_SYNTAX, "wrong");
 
-            VarObj tmplst[symPt->frame];
-            for (int j=0; j<symPt->frame; j++) {
-                tmplst[j] = DynamicMem.get(vo.getObjAdrs() + j);
-            }
-            cout << endl << " show list ";
-            for (VarObj vvo : tmplst) {
-                cout << endl << vvo.toFullString(true);
-            }
+            // VarObj tmplst[symPt->frame];
+            // for (int j=0; j<symPt->frame; j++) {
+            //     tmplst[j] = DynamicMem.get(vo.getObjAdrs() + j);
+            // }
+            // cout << endl << " show list ";
+            // for (VarObj vvo : tmplst) {
+            //     cout << endl << vvo.toFullString(true);
+            // }
             int lth = symPt->frame;
-            DynamicMem.updateInsert(varAdrs + idx * lth, diffLength * lth, varAdrs + symPt->args -1, tmplst, lth);
+            DynamicMem.updateInsert(varAdrs + idx * lth, diffLength * lth, varAdrs + symPt->args -1, tmpStructObj, lth);
+
+            tmpStructObj.clear();
         }
         else {
             DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
