@@ -417,7 +417,8 @@ MareBase::printInfos(bool all) {
         ItemTbl tb = Itable[i];
         cout << endl << " " << i << " :  " << (int)tb.dtTyp << "   " << (int)tb.symId
              << "       " << (int)tb.offset << "     : " << tb.name;
-        if (tb.initTyp != NON_T) cout << "   = " << tb.initVal << " or '" << tb.initStr << "'";
+        if (tb.initTyp != NON_T) 
+            cout << "   = " << tb.initVal << " or '" << tb.initStr << "' (" << tb.initTyp <<")";
     }
 
     cout << endl << DynamicMem.to_string();

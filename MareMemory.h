@@ -82,7 +82,7 @@ public:
     }
     /** 배열의 크기가 변경(bigger)될 때 (adrs에 addSize만큼 dt를 추가) */
     void updateExpand(int adrs, int addSize, VarObj dt) {
-        if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        if ((adrs+addSize) >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
         vector<VarObj> mem_temp;
 
         int iEnd = mem_size + addSize;
@@ -105,6 +105,34 @@ public:
         //mem.insert(it + adrs, addSize, dt);// 복사중 에러
         mem_size += addSize;
     }
+    void updateExpand(int adrs, int addSize, VarObj* dt, int lth) {
+        if ((adrs+addSize) >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        vector<VarObj> mem_temp;
+        
+        int iEnd = mem_size + addSize;
+        int step = adrs + addSize;
+        mem_temp.reserve(iEnd + 20);
+        for (int k=0; k<iEnd; ) {
+            if (k < adrs) {
+                mem_temp.push_back(mem[k++]);
+            }
+            else if (k < step) {
+                for (int j=0; j<lth; j++) {
+                    mem_temp.push_back(dt[j]);
+                    k++;
+                }
+            }
+            else {
+                mem_temp.push_back(mem[k-addSize]);
+                k++;
+            }
+        }
+        mem.clear();
+        mem.assign(mem_temp.begin(), mem_temp.end());
+
+        //mem.insert(it + adrs, addSize, dt);// 복사중 에러
+        mem_size += addSize;
+    }
     /** 배열의 크기가 변경(smaller)될 때 (adrs부터 subSize만큼 삭제) */
     void updateShrink(int adrs, int subSize) {
         if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
@@ -115,6 +143,9 @@ public:
             mem[k].init(NON_T);
             mem[k] = mem[k + subSize];
         }
+        for (int k=iEnd; k<mem_size; k++) 
+            mem[k].init(NON_T);
+
         mem.erase(it + iEnd);
         mem_size -= subSize;
     }
@@ -138,6 +169,31 @@ public:
             cout << endl << " -InsertVar -idx:" << (k+j);
             mem[k+j].init(NON_T);
             mem[k+j] = dt;
+        }
+    }
+    /** 배열의 데이터만 삭제 (capacity 유지) */
+    void updateInsert(int adrs, int subSize, int lastArrayIdx, std::vector<VarObj>& dt, int lth) {
+        if (adrs >= MEMORY_GLOBAL_MAX) throw tecBAD_ALLOCATE_MEMORY;
+        if (subSize < 1) throw tecNEED_UNSIGNED_INTEGER;
+        vector<VarObj>::iterator it = mem.begin();
+        cout << endl << " -updateInsert " << adrs << " " << subSize << " " << lastArrayIdx;
+        lastArrayIdx -= subSize;
+        int k=0;
+        for (k=lastArrayIdx; k>=adrs; k--) {
+            cout << endl << " -updateInsert -idx:" << (k+subSize);
+            mem[k+subSize].init(NON_T);
+            if (mem[k].getType() != NON_T){
+                mem[k+subSize] = mem[k];
+                cout << " -> " << mem[k+subSize].toFullString(true);
+            }
+        }
+        for (int j=1; j<=subSize; ) {
+            cout << endl << " -InsertObjVar -idx:" << (k+j);
+            for (int m=0; m<lth; m++) {
+                mem[k+j].init(NON_T);
+                mem[k+j] = dt[m];
+                j++;
+            }
         }
     }
     /** 배열의 데이터만 삭제 (capacity 유지) */

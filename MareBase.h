@@ -60,6 +60,7 @@ protected:
     MareMemory      DynamicMem;            /* 메모리 (변수 값 저장) */
     vector<double>  nbrLITERAL;            /* 수치 리터럴 저장 */
     vector<string>  strLITERAL;            /* 문자열 리터럴 저장 */
+    vector<VarObj>  tmpStructObj;          /* struct obj를 담을 임시 공간 */
 
     Token token;                           /* 현재 처리중인 토큰 (interperter) */
     CodeSet code;                          /* 현재 코드 셋 (InitExec, Executer) */

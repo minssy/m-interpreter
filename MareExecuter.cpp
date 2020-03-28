@@ -433,7 +433,7 @@ MareExecuter::statement()
  * diff: 배열의 크기변화 (양수 및 음수 가능)
  */
 void 
-MareExecuter::updateSymTbl(int adrs, int diff, bool isFixedArray)
+MareExecuter::updateSymTbl(int adrs, int diff, int frameSz, bool isFixedArray)
 {
     short gtblSize = Gtable.size();
     for (int k=0;k<gtblSize;k++) {
@@ -444,7 +444,7 @@ MareExecuter::updateSymTbl(int adrs, int diff, bool isFixedArray)
             Gtable[k].adrs = vAdrs + diff;
         }
         else if (vAdrs == adrs) {
-            if (isFixedArray) Gtable[k].aryLen += diff;
+            if (isFixedArray) Gtable[k].aryLen += (diff/frameSz);
             Gtable[k].args += diff;
         }
     }
@@ -471,17 +471,42 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         int osz = symPt->aryLen;
         diffLength = nsz - osz;
         if (diffLength != 0) {
-            if (diffLength > 0) { // insert
+            diffLength *= symPt->frame; // struct object 고려
+            osz *= symPt->frame; // struct object 고려
+            if (diffLength > 0) { // expand
                 // symtbl update
-                updateSymTbl(varAdrs, diffLength, true);
-                VarObj objTmp;
-                objTmp.init(symPt->dtTyp);
-                // memory update
-                DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
+                updateSymTbl(varAdrs, diffLength, symPt->frame, true);
+                if (symPt->dtTyp == OBJECT_T) {
+                    cout << endl << " ... obj ... " << symPt->ref << ": ";
+                    VarObj tmplst[symPt->frame];
+                    short obj_type = symPt->ref;
+                    for (ItemTbl it : Itable) {
+                        cout << endl << " item:" << it.symId << " " << it.name << "-> ";
+                        if (it.symId == obj_type) {
+                            cout << it.offset <<"("<< (int)it.dtTyp <<") ";
+                            VarObj wkVal; 
+                            wkVal.init(it.dtTyp);
+                            if (it.initTyp == STR_T) { wkVal.set(it.initStr); }
+                            else if (it.initTyp != NON_T) {wkVal.set(it.initVal); }
+                            tmplst[it.offset] = wkVal;
+                        }
+                    }
+                    cout << endl << " show list ";
+                    for (VarObj vvo : tmplst) {
+                        cout << endl << vvo.toFullString(true);
+                    }
+                    // memory update // 에러 발생하고 있음...??
+                    DynamicMem.updateExpand(varAdrs + osz, diffLength, tmplst, symPt->frame);
+                }
+                else {
+                    VarObj objTmp; objTmp.init(symPt->dtTyp);
+                    // memory update
+                    DynamicMem.updateExpand(varAdrs + osz, diffLength, objTmp);
+                }
             }
-            else { // erase
+            else { // shrink
                 // symtbl update
-                updateSymTbl(varAdrs, diffLength, true);
+                updateSymTbl(varAdrs, diffLength, symPt->frame, true);
                 // memory update
                 diffLength *= -1;
                 DynamicMem.updateShrink(varAdrs + osz - diffLength, diffLength);
@@ -502,26 +527,50 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         code = nextCode();
         // 타입 검사 필요함.
         int osz = symPt->aryLen;
-        int bsz = symPt->args;
+        int bsz = symPt->args / symPt->frame;
         if (osz == NOT_DEFINED_ARRAY) osz = 0;
         if ((osz + diffLength) >= bsz) {
+            // 메모리 여유분 확보함.
             short kk = osz + diffLength - bsz;
             if (kk > MEMORY_BACK_RESIZE) {
                 kk = (kk / MEMORY_BACK_RESIZE) + 1;
             }
             else kk = 1;
-            updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
-            VarObj objTmp;
-            objTmp.init(symPt->dtTyp);
-            DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
+            kk *= symPt->frame; // struct object까지 고려함.
+            updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, symPt->frame, false);
+            VarObj objTmp; 
+            if (symPt->dtTyp == OBJECT_T) objTmp.init(NON_T);
+            else objTmp.init(symPt->dtTyp);
+            DynamicMem.updateExpand(varAdrs + (osz * symPt->frame), MEMORY_BACK_RESIZE * kk, objTmp);
         }
+        // result update
         symPt->aryLen = (osz + diffLength);
-        for (short idx=0; idx<diffLength; idx++)
-            DynamicMem.set(varAdrs + osz + idx, vo);
+
+        if (vo.getType() == OBJECT_T) {
+            osz *= symPt->frame;
+            cout << endl << " ???  object?? add ";
+            if (tmpStructObj.size() == 0) errorExit(tecINCORRECT_SYNTAX, "wrong");
+            short objSize = tmpStructObj.size();
+            cout << objSize << " start:";
+            int insertIdx = varAdrs + osz;
+            for (short idx=0; idx<diffLength; idx++) {
+                for (short k=0; k<objSize; k++) {
+                    cout << " " << (insertIdx + k);
+                    DynamicMem.set(insertIdx + k, tmpStructObj[k]);
+                }
+                insertIdx += objSize;
+            }
+            tmpStructObj.clear();
+        }
+        else {
+            cout << endl << " ???  var?? add " << vo.toFullString(true);
+            for (short idx=0; idx<diffLength; idx++)
+                DynamicMem.set(varAdrs + osz + idx, vo);
+        }
         isUpdatedSymbols = true;
         break;
     }
-    case Insert: 
+    case Insert: // 작업필요
     {
         code = nextCode();
         VarObj vo = getExpression('(', 0);
@@ -533,7 +582,7 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         }
         code = nextCode();
         int osz = symPt->aryLen;
-        int bsz = symPt->args;
+        int bsz = symPt->args / symPt->frame;
         if (osz == NOT_DEFINED_ARRAY) osz = 0;
         if ((osz + diffLength) >= bsz) {
             cout << endl << " && insert expand &&";
@@ -542,16 +591,30 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
                 kk = (kk / MEMORY_BACK_RESIZE) + 1;
             }
             else kk = 1;
-            updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, false);
+            kk *= symPt->frame; // struct object까지 고려함.
+            updateSymTbl(varAdrs, MEMORY_BACK_RESIZE * kk, symPt->frame, false);
             VarObj objTmp;
-            objTmp.init(symPt->dtTyp);
-            DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
-            bsz = symPt->args;
+            if (symPt->dtTyp == OBJECT_T) objTmp.init(NON_T);
+            else objTmp.init(symPt->dtTyp);
+            //DynamicMem.updateExpand(varAdrs + osz, MEMORY_BACK_RESIZE * kk, objTmp);
+            DynamicMem.updateExpand(varAdrs + (osz * symPt->frame), MEMORY_BACK_RESIZE * kk, objTmp);
+            bsz = symPt->args / symPt->frame;
         }
         cout << endl << " && insert1 && " << varAdrs << " " << osz;
         symPt->aryLen = (osz + diffLength);
         cout << endl << " && insert2 && " << idx << " " << diffLength << " " << vo.toFullString(true);
-        DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
+        if (vo.getType() == OBJECT_T) {
+            cout << endl << " ???  object?? add ";
+            if (tmpStructObj.size() == 0) errorExit(tecINCORRECT_SYNTAX, "wrong");
+
+            int lth = symPt->frame;
+            DynamicMem.updateInsert(varAdrs + idx * lth, diffLength * lth, varAdrs + symPt->args -1, tmpStructObj, lth);
+
+            tmpStructObj.clear();
+        }
+        else {
+            DynamicMem.updateInsert(varAdrs + idx, diffLength, varAdrs + bsz -1, vo);
+        }
         isUpdatedSymbols = true;
         break;
     }
@@ -571,7 +634,8 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
             errorExit(tecEXCEED_ARRAY_LENGTH, symPt->name, " has no item.");
         if ((idx+diffLength) > osz) errorExit(tecEXCEED_ARRAY_LENGTH);
         symPt->aryLen = osz - diffLength;
-        DynamicMem.updateRemove(varAdrs + idx, diffLength, varAdrs + bsz - 1);
+        diffLength *= symPt->frame;
+        DynamicMem.updateRemove(varAdrs + (idx*symPt->frame), diffLength, varAdrs + bsz - 1);
         isUpdatedSymbols = true;
         break;
     }
@@ -582,16 +646,17 @@ MareExecuter::setPropertyRun(CodeSet const& varCode, SymKind sk)
         int bsz = symPt->args;
         if (osz != 0 && osz != NOT_DEFINED_ARRAY)
         {
-            diffLength = bsz - MEMORY_BACK_RESIZE;
+            short bufSize = MEMORY_BACK_RESIZE * symPt->frame;
+            diffLength = bsz - bufSize;
             if (diffLength > 0) {
                 // symtbl update
-                updateSymTbl(varAdrs, (diffLength * -1), false);
+                updateSymTbl(varAdrs, (diffLength * -1), symPt->frame, false);
                 // memory update
                 DynamicMem.updateShrink(varAdrs + bsz - diffLength, diffLength);
             }
             symPt->aryLen = 0;
             VarObj vo;
-            for (short idx=0; idx<MEMORY_BACK_RESIZE; idx++)
+            for (short idx=0; idx<bufSize; idx++)
                 DynamicMem.set(varAdrs + idx, vo);
             isUpdatedSymbols = true;
         }
@@ -822,9 +887,10 @@ MareExecuter::factor()
     case Gvar: 
     case Lvar:
         {
-        DtType tmpTp = symTablePt(code)->dtTyp;    /* 변수 타입 : 순서에 주의 (getMemAdrs보다 먼저) */
-        unsigned short tmpSz = symTablePt(code)->aryLen;
+        auto symPt = symTablePt(code);
+        DtType tmpTp;
         int varAdrs = getMemAdrs(code, varSymType, tmpTp);
+        
         VarObj oo = DynamicMem.get(varAdrs);
         JLOG(mutil.j_.trace()) << " ** idObjType:" << varSymType << " "
             << kind2Str((TknKind)tmpTp) << " -> " << oo.toFullString(true);
@@ -840,7 +906,8 @@ MareExecuter::factor()
                 else 
                     errorExit(tecINVALID_SYSTEM_METHOD, "wrong code (variable's property function)");
             }
-            else {
+            else { // array or arrayList
+                int tmpSz = symPt->aryLen;
                 if (code.symIdx == Size) {
                     if (tmpSz == NOT_DEFINED_ARRAY) tmpSz = 0;
                     mstk.push(INT_T, tmpSz);
@@ -863,11 +930,27 @@ MareExecuter::factor()
                     }
                     code = nextCode();             /* ')' skip */
                     bool isFind = false;
-                    for (int adr=startIdx; adr<tmpSz; adr++) {
-                        if ((compObj == DynamicMem.get(adr + varAdrs)).getDbl()){
-                            isFind = true;
-                            mstk.push(INT_T, adr);
-                            break;
+                    if (tmpTp == OBJECT_T) {
+                        tmpSz *= symPt->frame;
+                        DtType matchType = compObj.getType();
+                        for (int idx=startIdx; idx<tmpSz; idx++) {
+                            VarObj memVar = DynamicMem.get(idx + varAdrs);
+                            if (matchType == memVar.getType()) {
+                                if ((compObj == memVar).getDbl()){
+                                    isFind = true;
+                                    mstk.push(INT_T, idx/symPt->frame);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        for (int idx=startIdx; idx<tmpSz; idx++) {
+                            if ((compObj == DynamicMem.get(idx + varAdrs)).getDbl()){
+                                isFind = true;
+                                mstk.push(INT_T, idx);
+                                break;
+                            }
                         }
                     }
                     if (!isFind) mstk.push(INT_T, -1);
@@ -879,6 +962,15 @@ MareExecuter::factor()
             code = nextCode(); code = nextCode(); code = nextCode();
         }
         else {
+            if (varSymType == objectId) {
+                unsigned short tmpSz = symPt->frame;
+                if (tmpStructObj.size() != 0) errorExit(tecINCORRECT_SYNTAX, "duplicated object");
+                for (short idx=0; idx<tmpSz; idx++) {
+                    tmpStructObj.push_back(DynamicMem.get(idx + varAdrs));
+                }
+                VarObj onw(OBJECT_T, varAdrs); mstk.push(onw);
+                break;
+            }
             if (oo.getType() == NON_T) errorExit(tecNEED_INIT_VARIABLE, "Attempt to use an uninitialized variable.");
             if (oo.getType() == tmpTp) mstk.push(oo); 
             else { VarObj onw(tmpTp, oo); mstk.push(onw); }
@@ -1372,7 +1464,7 @@ MareExecuter::nextCode()
     short int jmpAdrs, tblIdx;
 
     if (*code_ptr == '\0') {                     /* 현재 line에서 코드가 끝난 경우 */
-        cout << endl << " ** EOF Line ** ";
+        //cout << endl << " ** EOF Line ** ";
         return CodeSet(EofLine);
     }
     kd = (TknKind)*UCHAR_P(code_ptr++);          /* 분석용 포인터를 다음 위치로 설정해서 코드 값을 읽음 */

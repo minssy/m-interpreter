@@ -40,7 +40,7 @@ private:
         VarObj obj; 
         obj.init(dt);
         if (dt == INT_T || dt == DBL_T) obj.set(1.0);
-        else if (dt == DATETIME_T) obj.set(10);
+        else if (dt == DATETIME_T || dt == OBJECT_T) obj.set(5);
         else obj.set("ABC");
         return obj;
     }

@@ -169,6 +169,8 @@ MareInitExec::chkSyntax()
         case DBPlus:
         case DBMinus:
             code = nextCode(); 
+            if (!isNumericType(symTablePt(code)->dtTyp))
+                errorExit(tecNEED_NUMBER_TYPE, "Numeric Type only (++, --)");
             getMemAdrs(code, varSymType, dt);                 /* 좌변 주소 확인 */
             if (varSymType != varId) errorExit(tecNEED_VARIABLE_TYPE, "Leading operator (++, --)");
             if (dt != INT_T && dt != DBL_T) errorExit(tecNEED_NUMBER_TYPE, "Leading operator (++, --)");
@@ -229,7 +231,7 @@ MareInitExec::assignVariable(bool strict)
     DtType dt;
     getMemAdrs(code, varSymType, dt);                        /* 좌변 주소 확인 */
     if (code.kind == '.') {
-        if (strict) errorExit(tecNEED_VARIABLE_TYPE);
+        if (strict) errorExit(tecNEED_VARIABLE_TYPE, "for statment - index expression");
         return setProperty_syntax(save, varSymType);
     }
 
@@ -284,8 +286,8 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
     if (varCode.kind != Gvar) 
         errorExit(tecINCORRECT_SYNTAX, "global variable only");
 
-    if (objtp == OBJECT_T) 
-        errorExit(tecINCORRECT_SYNTAX, "under construction for struct object!!");
+    // if (objtp == OBJECT_T) 
+    //     errorExit(tecINCORRECT_SYNTAX, "under construction for struct object!!");
         
     if (code.symIdx == Resize) {
         if (sk != arrayId) errorExit(tecINCORRECT_SYNTAX, "array only");
@@ -316,6 +318,7 @@ MareInitExec::setProperty_syntax(CodeSet const& varCode, SymKind sk)
     else { 
         code = nextCode();
         if (objtp == OBJECT_T) {
+            code = nextCode();
             SymKind varSymType1;
             DtType dt1;
             getMemAdrs(code, varSymType1, dt1);
@@ -492,8 +495,12 @@ MareInitExec::factor_syntax()
                 else if (code.symIdx == IndexOf) { 
                     code = nextCode(); code = chkNextCode(code, '(');
                     DtType tmpTp2 = getExpression_syntax(0, 0).getType();
-                    if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
-                        errorExit(tecINVALID_VARIABLE_TYPE, "mismatch type");
+                    if (tmpTp2 == OBJECT_T)
+                        errorExit(tecINVALID_VARIABLE_TYPE, "cannot use obj type");
+                    else if (tmpTp == OBJECT_T) { }
+                    else if ((tmpTp != tmpTp2) && (!isNumericType(tmpTp) || !isNumericType(tmpTp2)))
+                        errorExit(tecINVALID_VARIABLE_TYPE, "mismatch var type");
+
                     if (code.kind == ',') { // 검색 시작 위치
                         code = nextCode();
                         tmpTp2 = getExpression_syntax(0, 0).getType();
@@ -524,7 +531,7 @@ MareInitExec::factor_syntax()
             code = chkNextCode(code, ')');
             removeDbgCode();
         }
-        else if (varSymTypeTmp != varId) {
+        else if (varSymTypeTmp != varId && varSymTypeTmp != objectId) {
             errorExit(tecNEED_VARIABLE_TYPE, "Invalid array type");
         }
         else {
