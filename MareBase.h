@@ -39,12 +39,14 @@ public:
     /** Ledger Data Format <-> Contract Data Format */
     Blob getInterCode();
     Blob getSymbolTable();
+    Blob getStructSymbol();
     Blob getLiterals();
     Blob getLogs();
     Blob getMemories();
 
     bool setInterCode(Blob const& obj);
     bool setSymbolTable(Blob const& obj);
+    bool setStructSymbolTable(Blob const& obj);
     bool setLiterals(Blob const& obj);
     bool setMemories(Blob const& priobj);
     bool isUpdatedSymbolTable() { return isUpdatedSymbols; }
@@ -56,7 +58,7 @@ protected:
     vector<SymTbl>  Gtable;                /* Global Variable Symbol Table */
     vector<SymTbl>  Ltable;                /* Local Variable Symbol Table */
     vector<ItemTbl> Itable;                /* Struct Item Symbol Table */
-    map<string, int> ObjectMap;            /* Struct 키워드 맵 */
+    map<string, int> ObjectMap;            /* Struct 키워드 맵  */
     MareMemory      DynamicMem;            /* 메모리 (변수 값 저장) */
     vector<double>  nbrLITERAL;            /* 수치 리터럴 저장 */
     vector<string>  strLITERAL;            /* 문자열 리터럴 저장 */

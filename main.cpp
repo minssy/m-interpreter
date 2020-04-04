@@ -114,6 +114,8 @@ int main(int argc, char *argv[])
             fileSave(obj, "./temp/dataLiterals.bin");
             obj = pars.getSymbolTable();
             fileSave(obj, "./temp/dataSymbols.bin");
+            obj = pars.getStructSymbol();
+            fileSave(obj, "./temp/dataStructs.bin");
 
             // 사용자가 시작 함수명과 인수를 입력했는지 확인
             // 사용자가 따로 입력한 것이 없을 경우, main함수가 있는지 확인
@@ -165,6 +167,9 @@ int main(int argc, char *argv[])
             datas_sz += obj.size();
             fileLoad(obj, "./temp/dataSymbols.bin");
             exec.setSymbolTable(obj);
+            datas_sz += obj.size();
+            fileLoad(obj, "./temp/dataStructs.bin");
+            exec.setStructSymbolTable(obj);
             datas_sz += obj.size();
             fileLoad(obj, "./temp/dataMemoryPri.bin");
             exec.setMemories(obj);

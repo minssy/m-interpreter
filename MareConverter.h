@@ -107,6 +107,53 @@ static bool fromBlob2SymTbl(Blob const& in_, vector<SymTbl>& global, vector<SymT
                 throw tecCONTRACT_PREPROCESS_ERROR;
             }
         }
+    }
+    return false;
+}
+
+static bool fromBlob2StructTbl(Blob const& in_, vector<ItemTbl>& global, map<string, int>& local) {
+    
+    global.clear(); local.clear();
+    vector<string> jStrs = fromBlob(in_);
+    int max = jStrs.size();
+    int cnt = 0;
+    while (cnt < max) {
+        string strtype = jStrs[cnt++];
+        if (strtype.length() < 2) throw tecCONTRACT_PREPROCESS_ERROR;
+        unsigned char typek = strtype.at(0);
+        int nums = atoi(strtype.substr(2).c_str());
+        if (typek == StructItem) {
+            ItemTbl tmpTb;
+            for(int i=0; i<nums; i++){
+                string str = jStrs[cnt++];
+                // check str length
+                vector<string> params = split(str, ' ');
+                tmpTb.clear();
+                tmpTb.dtTyp = (DtType)atoi(params[0].c_str());
+                tmpTb.symId  = atoi(params[1].c_str());
+                tmpTb.offset = atoi(params[2].c_str());
+                tmpTb.name = params[3].c_str();
+                tmpTb.initTyp = (DtType)atoi(params[4].c_str());
+                if (tmpTb.initTyp == NON_T) {}
+                else if (tmpTb.initTyp == STR_T)
+                    tmpTb.initStr = params[5];
+                else
+                    tmpTb.initVal = atoi(params[5].c_str());
+
+                global.push_back(tmpTb);
+            }
+        }
+        else if (typek == Other) {
+            for(int i=0; i<nums; i++){
+                string str = jStrs[cnt++];
+                // check str length
+                vector<string> params = split(str, ' ');
+                local.insert(make_pair(params[0], atoi(params[1].c_str())));
+            }
+        }
+        else {
+            throw tecCONTRACT_PREPROCESS_ERROR;
+        }
     }    
     return false;
 }
@@ -272,6 +319,33 @@ static Blob toBlob(vector<SymTbl> const& global, vector<SymTbl> const& local) {
         for (int i=0; i<max; i++){
             SymTbl sym = local[i];
             appendBlob(sym.toFullString(), obj);
+        }
+    }
+    return obj;
+}
+
+/** Converting from Itable, ObjectMap to sfSymTbls */
+static Blob toBlob(vector<ItemTbl> const& global, map<string, int>& local) {
+
+    Blob obj;
+    int max = global.size();
+    if (max > 0) {
+        appendBlob(StructItem, max, obj);
+        for (int i=0; i<max; i++){
+            ItemTbl sym = global[i];
+            appendBlob(sym.toFullString(), obj);
+        }
+    }
+    max = local.size();
+    if (max > 0) {
+        appendBlob(Other, max, obj);
+        // for (int i=0; i<max; i++){
+        //     SymTbl sym = local[i];
+        //     appendBlob(sym.toFullString(), obj);
+        // }
+        map<string, int>::iterator it;
+        for (it=local.begin(); it!=local.end(); ++it) {
+            appendBlob(it->first + " " + to_string(it->second), obj);
         }
     }
     return obj;
