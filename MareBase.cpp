@@ -475,6 +475,11 @@ MareBase::getSymbolTable() {
 }
 
 Blob 
+MareBase::getStructSymbol() {
+    return toBlob(Itable, ObjectMap);
+}
+
+Blob 
 MareBase::getLiterals() {
     return toBlob(nbrLITERAL, strLITERAL);
 }
@@ -497,6 +502,11 @@ MareBase::setInterCode(Blob const& obj) {
 bool 
 MareBase::setSymbolTable(Blob const& obj) {
     return fromBlob2SymTbl(obj, Gtable, Ltable);
+}
+
+bool 
+MareBase::setStructSymbolTable(Blob const& obj) {
+    return fromBlob2StructTbl(obj, Itable, ObjectMap);
 }
 
 bool 

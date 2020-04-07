@@ -39,12 +39,14 @@ public:
     /** Ledger Data Format <-> Contract Data Format */
     Blob getInterCode();
     Blob getSymbolTable();
+    Blob getStructSymbol();
     Blob getLiterals();
     Blob getLogs();
     Blob getMemories();
 
     bool setInterCode(Blob const& obj);
     bool setSymbolTable(Blob const& obj);
+    bool setStructSymbolTable(Blob const& obj);
     bool setLiterals(Blob const& obj);
     bool setMemories(Blob const& priobj);
     bool isUpdatedSymbolTable() { return isUpdatedSymbols; }
@@ -106,7 +108,7 @@ protected:
             case SET_PARAMETER_TYPE:
                 return "Parameter:" + to_string(cd.jmpAdrs + 1);
         }
-        return kind2Str(cd.kind) + "??";
+        return kind2Str(cd.kind) + "(??)";
     }
 
     /* 디버깅용 */
@@ -114,39 +116,39 @@ protected:
 
     short countExps;
     inline void initDbgCode() {
-        cout << endl << "***** reset dbg" << blkNest;
+        //cout << endl << "***** reset dbg" << blkNest;
         countExps = 0;
         if (blkNest == 0) dbgCode.clear();
         else dbgCode.erase(dbgCode.begin() + blkNest, dbgCode.end());
-        dbgdbg();
+        //dbgdbg();
     }
     inline void initDbgCode(CodeSet cs) {
         initDbgCode();
         dbgCode.push_back(cs);
-        cout << " new:" << kind2Str(cs.kind);
+        //cout << " new:" << kind2Str(cs.kind);
     }
     inline void addDbgCode(CodeSet cs) {
-        cout << endl << "***** add dbg"; 
+        //cout << endl << "***** add dbg"; 
         dbgCode.push_back(cs);
-        dbgdbg();
+        //dbgdbg();
     }
     inline void addDbgCode(TknKind const tk, short const sym, short const jmp) {
         dbgCode.push_back(CodeSet(tk, sym, jmp));
     }
     inline void changeDbgCode(CodeSet cs) {
-        cout << endl << "***** chg dbg";
+        //cout << endl << "***** chg dbg";
         if (dbgCode.size() > 0) dbgCode.pop_back();
         dbgCode.push_back(cs);
-        dbgdbg();
+        //dbgdbg();
     }
     inline void changeDbgCode(TknKind const tk, short const sym, short const jmp) {
         changeDbgCode(CodeSet(tk, sym, jmp));
     }
     inline void removeDbgCode() {
-        cout << endl << "***** del dbg"; 
+        //cout << endl << "***** del dbg"; 
         if (dbgCode.size() > 0) dbgCode.pop_back();
         else cout << endl << "*******  remove dbg fail why?????  *** ";
-        dbgdbg();
+        //dbgdbg();
     }
     inline string getCodeSetStr(CodeSet& cs) {
         string s1 = kind2Str(cs.kind);
@@ -154,12 +156,12 @@ protected:
         if (s1 == s2) return s1;
         else return s1.append("(").append(s2).append(")");
     }
-    inline void dbgdbg() {
-        cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
-        for(CodeSet c : dbgCode){
-            cout << kind2Str(c.kind) << " ";
-        }
-    }
+    // inline void dbgdbg() {
+    //     cout << " (lvl " << blkNest << ":" << dbgCode.size() << ") ";
+    //     for(CodeSet c : dbgCode){
+    //         cout << kind2Str(c.kind) << " ";
+    //     }
+    // }
 
 private:
     static map<TknKind, string> kindMapDBG;  /* 소스 코드와 내부 코드의 키워드 맵 */
